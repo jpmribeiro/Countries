@@ -27,7 +27,7 @@
                     };
                 }
 
-                var Countries = JsonConvert.DeserializeObject<List<Countrie>>(result);//Moves the results (JSON) to a list
+                var Countries = JsonConvert.DeserializeObject<List<Country>>(result);//Moves the results (JSON) to a list
 
                 return new Response
                 {

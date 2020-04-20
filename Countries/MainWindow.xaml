@@ -7,25 +7,48 @@
         mc:Ignorable="d"
         Title="COUNTRIES" Height="650" Width="1200" ResizeMode="NoResize" SizeToContent="WidthAndHeight" Topmost="False" WindowState="Normal" Icon="./Resources/CountriesIcon.png">
     <Grid>
-        <StackPanel Margin="50,50,718,69">
-            <ListBox  x:Name="listBoxCountries" HorizontalAlignment="Left" VerticalAlignment="Top" Width="426" Height="479" SelectionChanged="listBoxCountries_SelectionChanged"/>
-            <ProgressBar x:Name="ProgressBarReport" Height="19" ValueChanged="ProgressBarReport_ValueChanged"/>
+        <ProgressBar x:Name="ProgressBarReport" Height="14" ValueChanged="ProgressBarReport_ValueChanged" Foreground="#FF065BB0" Margin="0,0,0,607" />
+        <StackPanel Margin="10,35,806,10">
+            <ListBox  x:Name="listBoxCountries" Height="462" SelectionChanged="listBoxCountries_SelectionChanged" Margin="20,0,0,0" HorizontalAlignment="Left" Width="341"/>
+            <TextBox x:Name="TxtSearchCountry" Background="#FFF1E8E8" TextChanged="TxtSearchCountry_TextChanged" Margin="100,0,0,0" HorizontalAlignment="Left" Width="231" Height="20"/>
+            <Label x:Name="labelReport" Content="Report" RenderTransformOrigin="0.5,0.5"/>
         </StackPanel>
-        <StackPanel Margin="563,81,148,169">
-            <Label Content="Name:"/>
-            <TextBlock x:Name="TxtBlockName" TextWrapping="Wrap" Text=""/>
-            <Label Content="Capital:"/>
-            <TextBlock x:Name="TxtBlockCapital" TextWrapping="Wrap" Text=""/>
-            <Label Content="Region:"/>
-            <TextBlock x:Name="TxtBlockRegion" TextWrapping="Wrap" Text=""/>
-            <Label Content="SubRegion:"/>
-            <TextBlock x:Name="TxtBlockSubRegion" TextWrapping="Wrap" Text=""/>
-            <Label Content="Population:"/>
-
-            <TextBlock x:Name="TxtBlockPopulation" TextWrapping="Wrap" Text=""/>
-        </StackPanel>
-        <StackPanel Margin="50,571,563,18">
-            <Label x:Name="labelReport" Content="Report" Margin="0,0,366,0"/>
+        <StackPanel Margin="460,47,107,10">
+            <TabControl>
+                <TabItem Header="General">
+                    <StackPanel Height="508">
+                        <Border BorderThickness="2" BorderBrush="Black" HorizontalAlignment="Right" Width="202" Margin="0,0,187,0">
+                            <Image x:Name="FlagImage" Height="100" Cursor="None" HorizontalAlignment="Left" Width="194" />
+                        </Border>
+                        <Label Content="Name:" FontWeight="Bold"/>
+                        <TextBlock x:Name="TxtBlockName" TextWrapping="Wrap" Text=""/>
+                        <Label Content="Native Name:" FontWeight="Bold"/>
+                        <TextBlock x:Name="TxtBlockNativeName" TextWrapping="Wrap" Text=""/>
+                        <Label Content="Capital:" FontWeight="Bold"/>
+                        <TextBlock x:Name="TxtBlockCapital" TextWrapping="Wrap" Text=""/>
+                        <Label Content="Region:" FontWeight="Bold"/>
+                        <TextBlock x:Name="TxtBlockRegion" TextWrapping="Wrap" Text=""/>
+                        <Label Content="SubRegion:" FontWeight="Bold"/>
+                        <TextBlock x:Name="TxtBlockSubRegion" TextWrapping="Wrap" Text=""/>
+                        <Label Content="Population:" FontWeight="Bold"/>
+                        <TextBlock x:Name="TxtBlockPopulation" TextWrapping="Wrap" Text=""/>
+                        <Label Content="Area:" FontWeight="Bold"/>
+                        <TextBlock x:Name="TxtBlockArea" TextWrapping="Wrap" Text=""/>
+                        <Label Content="Languages:" FontWeight="Bold"/>
+                        <TextBlock x:Name="TxtBlockLanguages" TextWrapping="Wrap" Text="{Binding LanguageName}" />
+                    </StackPanel>
+                </TabItem>
+                <TabItem Header="Info2">
+                    <StackPanel Height="508">
+                        
+                    </StackPanel>
+                </TabItem>
+                <TabItem Header="Info3">
+                    <StackPanel Height="508">
+                    
+                    </StackPanel>
+                </TabItem>
+            </TabControl>
         </StackPanel>
     </Grid>
 

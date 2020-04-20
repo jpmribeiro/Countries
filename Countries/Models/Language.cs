@@ -6,7 +6,7 @@
     using System.Text;
     using System.Threading.Tasks;
 
-    public class Language:Countrie
+    public class Language:Country
     {
         public string Iso639_1 { get; set; }
         public string Iso639_2 { get; set; }

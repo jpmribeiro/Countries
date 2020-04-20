@@ -6,7 +6,7 @@
     using System.Text;
     using System.Threading.Tasks;
 
-    public class Countrie
+    public class Country
     {
         public string Name { get; set; }
         public List<string> TopLevelDomain { get; set; }

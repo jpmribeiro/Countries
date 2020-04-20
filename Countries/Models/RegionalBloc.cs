@@ -6,7 +6,7 @@
     using System.Text;
     using System.Threading.Tasks;
 
-    public class RegionalBloc:Countrie
+    public class RegionalBloc:Country
     {
         public string Acronym { get; set; }
         public string RegionalBlocName { get; set; }

@@ -6,7 +6,7 @@
     using System.Text;
     using System.Threading.Tasks;
 
-    public class Translation:Countrie
+    public class Translation:Country
     {
         public string De { get; set; }
         public string Es { get; set; }
