@@ -85,7 +85,13 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Models\CountryHoliday.cs" />
+    <Compile Include="Models\Date.cs" />
+    <Compile Include="Models\Holiday.cs" />
+    <Compile Include="Models\Observed.cs" />
+    <Compile Include="Models\Request.cs" />
     <Compile Include="Models\Response.cs" />
+    <Compile Include="Models\Weekday.cs" />
     <Compile Include="Services\ApiService.cs" />
     <Compile Include="Services\DataService.cs" />
     <Compile Include="Services\DialogService.cs" />

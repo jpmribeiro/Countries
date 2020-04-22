@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:Countries"
         mc:Ignorable="d"
         Title="COUNTRIES" Height="650" Width="1200" ResizeMode="NoResize" SizeToContent="WidthAndHeight" Topmost="False" WindowState="Normal" Icon="./Resources/CountriesIcon.png">
-    <Grid>
+   <Grid>
         <ProgressBar x:Name="ProgressBarReport" Height="14" ValueChanged="ProgressBarReport_ValueChanged" Foreground="#FF065BB0" Margin="0,0,0,607" />
         <StackPanel Margin="10,35,806,10">
             <ListBox  x:Name="listBoxCountries" Height="462" SelectionChanged="listBoxCountries_SelectionChanged" Margin="20,0,0,0" HorizontalAlignment="Left" Width="341"/>
@@ -18,7 +18,7 @@
                 <TabItem Header="General">
                     <StackPanel Height="508">
                         <Border BorderThickness="2" BorderBrush="Black" HorizontalAlignment="Right" Width="202" Margin="0,0,187,0">
-                            <Image x:Name="FlagImage" Height="100" Cursor="None" HorizontalAlignment="Left" Width="194" />
+                            <Image x:Name="FlagImage" Height="100" Cursor="None" HorizontalAlignment="Left" Width="199" Margin="0,0,-2,0" />
                         </Border>
                         <Label Content="Name:" FontWeight="Bold"/>
                         <TextBlock x:Name="TxtBlockName" TextWrapping="Wrap" Text=""/>
@@ -35,18 +35,17 @@
                         <Label Content="Area:" FontWeight="Bold"/>
                         <TextBlock x:Name="TxtBlockArea" TextWrapping="Wrap" Text=""/>
                         <Label Content="Languages:" FontWeight="Bold"/>
-                        <TextBlock x:Name="TxtBlockLanguages" TextWrapping="Wrap" Text="{Binding LanguageName}" />
+                        <ListBox x:Name="ListBoxLanguages" Height="79" BorderBrush="Transparent"/>
                     </StackPanel>
                 </TabItem>
-                <TabItem Header="Info2">
+                <TabItem Header="Holidays">
                     <StackPanel Height="508">
-                        
+                        <Label x:Name="countHolidays" FontWeight="Bold"/>
+                        <ListBox x:Name="listBoxCountriesHolidays" Height="481" Margin="0,0,300,0" BorderBrush="Transparent"/>
                     </StackPanel>
                 </TabItem>
                 <TabItem Header="Info3">
-                    <StackPanel Height="508">
-                    
-                    </StackPanel>
+                    <StackPanel Height="508"/>
                 </TabItem>
             </TabControl>
         </StackPanel>
