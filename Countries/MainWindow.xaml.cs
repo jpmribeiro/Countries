@@ -260,6 +260,7 @@ namespace Countries
     using System.Globalization;
     using System.Net;
     using System.Drawing.Imaging;
+    using System.Diagnostics;
 
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -271,17 +272,16 @@ namespace Countries
         private readonly ApiService apiService;
         private readonly NetworkService networkService;
         private readonly DialogService dialogService;
-        //private readonly DataService dataService;
+        private readonly DataService dataService;
 
         public MainWindow()
         {
             InitializeComponent();
             this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-
             networkService = new NetworkService();
             apiService = new ApiService();
             dialogService = new DialogService();
-            //dataService = new DataService();
+            dataService = new DataService();
             LoadCountries();
         }
 
@@ -296,7 +296,9 @@ namespace Countries
             if (!connection.IsSucess) //If no Internet Connection is Available
             {
                 //LoadLocalCountries();
+
                 load = false;
+
             }
             else
             {
@@ -310,7 +312,7 @@ namespace Countries
 
             }
 
-            if (ListOfCountries.Count == 0)
+            if (ListOfCountries.Count == 0) 
             {
                 labelReport.Content = "There Is no Internet Connection at the moment" + Environment.NewLine +
                    "And there is not a local repository" + Environment.NewLine +
@@ -345,11 +347,15 @@ namespace Countries
             ProgressBarReport.Value = 0;
             var response = await apiService.GetCountries("http://restcountries.eu", "/rest/v2/all");
             ListOfCountries = (List<Country>)response.Result;
-            ////dataService.DeleteData(); 
-            //dataService.SaveData(ListOfCountries);
+            ////dataService.DeleteData();
+            var stopwatch = Stopwatch.StartNew();
+            await dataService.SaveDataCountry(ListOfCountries);
+            stopwatch.Stop();
+            var elapsped = stopwatch.Elapsed;
+            MessageBox.Show(elapsped.ToString());
         }
 
-        private async Task LoadHoliday(string c)
+        private async Task LoadHoliday(string c) //FAZER COM QUE SO ENTRE AQUI SE HOUVER LIGACAO A NET
         {
             int auxcount = 0;
 
@@ -375,7 +381,6 @@ namespace Countries
                 listBoxCountriesHolidays.ItemsSource = null;
             }
 
-
         }
 
         private void ProgressBarReport_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
@@ -383,9 +388,12 @@ namespace Countries
 
         }
 
-        private void listBoxCountries_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private async void listBoxCountries_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            var connection = networkService.CheckConnection();
+
             ListBoxLanguages.ItemsSource = null;
+
             Country selectedCountry = (Country)listBoxCountries.SelectedItem;
 
             if (selectedCountry != null)
@@ -401,10 +409,13 @@ namespace Countries
                 this.TxtBlockCapital.Text = selectedCountry.Capital;
                 this.TxtBlockRegion.Text = selectedCountry.Region;
                 this.TxtBlockSubRegion.Text = selectedCountry.Subregion;
-                this.TxtBlockArea.Text = selectedCountry.Area + " Km2";
+                this.TxtBlockArea.Text = selectedCountry.Area.GetValueOrDefault().ToString() + " Km2";
+                this.TxtBlockGini.Text = selectedCountry.Gini.GetValueOrDefault().ToString();
                 this.TxtBlockPopulation.Text = selectedCountry.Population.ToString("#,#", CultureInfo.InvariantCulture) + " Inhabitants";
 
-                string flagName = selectedCountry.Flag.Split('/')[4].Split('.')[0];
+                string flagName = selectedCountry.Alpha3Code;
+
+                await LoadHoliday(selectedCountry.Alpha2Code);
 
                 try
                 {
@@ -425,19 +436,23 @@ namespace Countries
                     FlagImage.Source = img;
                     FlagImage.Stretch = Stretch.Fill;
 
-                    LoadHoliday(selectedCountry.Alpha2Code);
-
                 }
                 catch
                 {
 
                 }
-
+                
 
                 listBoxCountries.ItemsSource = ListOfCountries;
 
             }
 
+            CheckData();
+
+        }
+
+        private void CheckData()
+        {
             if (this.TxtBlockCapital.Text == string.Empty)
             {
                 this.TxtBlockCapital.Text = "(Unknown)";
@@ -454,11 +469,14 @@ namespace Countries
             {
                 this.TxtBlockSubRegion.Text = "(Unknown)";
             }
-            if (this.TxtBlockArea.Text == " Km2")
+            if ((this.TxtBlockArea.Text == " Km2") || (this.TxtBlockArea.Text == "0"))
             {
                 this.TxtBlockArea.Text = "(Unknown)";
             }
-
+            if ((this.TxtBlockGini.Text == string.Empty) || (this.TxtBlockGini.Text == "0"))
+            {
+                this.TxtBlockGini.Text = "(Unknown)";
+            }
         }
 
         private void TxtSearchCountry_TextChanged(object sender, TextChangedEventArgs e)
@@ -480,10 +498,10 @@ namespace Countries
 
         private void GetCountriesFlags(List<Country> ListOfCountries)
         {
-
             if (!Directory.Exists("Flags"))
             {
                 Directory.CreateDirectory("Flags");
+
             }
 
             foreach (Country country in ListOfCountries)
@@ -524,13 +542,15 @@ namespace Countries
             }
         }
 
-
-        //private void LoadLocalCountries()
-        //{
-        //    ListOfCountries = dataService.GetData(); //Retorna uma Lista
-        //}
-
-
+        private void LoadLocalCountries()
+        {
+            ListOfCountries = dataService.GetLocalDataCountry(); //Returns a Local Repository containing The various API's Data
+            ////dataService.DeleteData();
+            var stopwatch = Stopwatch.StartNew();
+            stopwatch.Stop();
+            var elapsped = stopwatch.Elapsed;
+            MessageBox.Show(elapsped.ToString());
+        }
 
     }
 }

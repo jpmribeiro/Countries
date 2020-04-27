@@ -6,11 +6,11 @@
         xmlns:local="clr-namespace:Countries"
         mc:Ignorable="d"
         Title="COUNTRIES" Height="650" Width="1200" ResizeMode="NoResize" SizeToContent="WidthAndHeight" Topmost="False" WindowState="Normal" Icon="./Resources/CountriesIcon.png">
-   <Grid>
+    <Grid>
         <ProgressBar x:Name="ProgressBarReport" Height="14" ValueChanged="ProgressBarReport_ValueChanged" Foreground="#FF065BB0" Margin="0,0,0,607" />
-        <StackPanel Margin="10,35,806,10">
-            <ListBox  x:Name="listBoxCountries" Height="462" SelectionChanged="listBoxCountries_SelectionChanged" Margin="20,0,0,0" HorizontalAlignment="Left" Width="341"/>
-            <TextBox x:Name="TxtSearchCountry" Background="#FFF1E8E8" TextChanged="TxtSearchCountry_TextChanged" Margin="100,0,0,0" HorizontalAlignment="Left" Width="231" Height="20"/>
+        <StackPanel Margin="10,47,806,10">
+            <TextBox x:Name="TxtSearchCountry" Background="#FFF1E8E8" TextChanged="TxtSearchCountry_TextChanged" Margin="100,0,0,0" HorizontalAlignment="Left" Width="160" Height="20"/>
+            <ListBox  x:Name="listBoxCountries" Height="509" SelectionChanged="listBoxCountries_SelectionChanged" Margin="20,0,0,0" HorizontalAlignment="Left" Width="341"/>
             <Label x:Name="labelReport" Content="Report" RenderTransformOrigin="0.5,0.5"/>
         </StackPanel>
         <StackPanel Margin="460,47,107,10">
@@ -34,6 +34,8 @@
                         <TextBlock x:Name="TxtBlockPopulation" TextWrapping="Wrap" Text=""/>
                         <Label Content="Area:" FontWeight="Bold"/>
                         <TextBlock x:Name="TxtBlockArea" TextWrapping="Wrap" Text=""/>
+                        <Label Content="Gini Index:" FontWeight="Bold"/>
+                        <TextBlock x:Name="TxtBlockGini" TextWrapping="Wrap" Text=""/>
                         <Label Content="Languages:" FontWeight="Bold"/>
                         <ListBox x:Name="ListBoxLanguages" Height="79" BorderBrush="Transparent"/>
                     </StackPanel>

@@ -6,7 +6,7 @@
     using System.Text;
     using System.Threading.Tasks;
 
-    public class Currency:Country
+    public class Currency
     {
         public string Code { get; set; }
         public string CurrencyName { get; set; }

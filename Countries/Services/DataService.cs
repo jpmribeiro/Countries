@@ -4,89 +4,218 @@
     using System;
     using System.Collections.Generic;
     using System.Data.SQLite;
+    using System.Globalization;
     using System.IO;
+    using System.Threading;
+    using System.Threading.Tasks;
 
     public class DataService
     {
         private SQLiteConnection connection;
 
-        private SQLiteCommand command;
+        private SQLiteCommand commandCountry;
 
         private DialogService dialogService;
 
-    //    public DataService() //Construtor que verifica que se existe a pasta com a Base de Dados
-    //    {
-    //        dialogService = new DialogService();
+        public DataService() //Construtor que verifica que se existe a pasta com a Base de Dados
+        {
+            dialogService = new DialogService();
 
-    //        if (!Directory.Exists("Data"))
-    //        {
-    //            Directory.CreateDirectory("Data"); //Se a pasta não existir, é criada
-    //        }
+            var pointCulture = new CultureInfo("en")
+            {
+                NumberFormat = { NumberDecimalSeparator = "." }
+            };
 
-    //        var path = @"Data\Countries.sqlite";
+            Thread.CurrentThread.CurrentCulture = pointCulture;
 
-    //        //try
-    //        //{
-    //        //    connection = new SQLiteConnection("DataSource=" + path); //Caminho para fazer a conexação À Base de Dados
-    //        //    connection.Open();
-    //        //    //string sqlCommand = "Create table if not exists Countries(RateId int, Code varchar(5), TaxRate real, Name varchar(250))"; //Comando SQL que cria a Tabela
-    //        //    //command = new SQLiteCommand(sqlCommand, connection);
-    //        //    command.ExecuteNonQuery();
-    //        //}
-    //        //catch (Exception e)
-    //        //{
-    //        //    dialogService.ShowMessage("Error", e.Message);
-    //        //}
+            if (!Directory.Exists("Data"))
+            {
+                Directory.CreateDirectory("Data"); //Se a pasta não existir, é criada
+            }
 
-    //    }
-    //    public void SaveData(List<Countrie> countries)
-    //    {
-    //        try
-    //        {
-    //            foreach (var c in countries) //Para cada rate na lista de rates
-    //            {
-    //                //string sql = string.Format("insert into Rates (RateId,Code,TaxRate,Name) values({0}, '{1}', '{2}', '{3}')", c.RateId, rate.Code, rate.TaxRate, rate.Name);
-    //                //command = new SQLiteCommand(sql, connection);
-    //                command.ExecuteNonQuery();
-    //            }
-    //            connection.Close();
-    //        }
-    //        catch (Exception e)
-    //        {
-    //            dialogService.ShowMessage("Error", e.Message);
-    //        }
-    //    }
-    //    public List<Countrie> GetData()
-    //    {
-    //        List<Countrie> Rates = new List<Countrie>();
+            var path = @"Data\Countries.sqlite";
 
-    //        try
-    //        {
-    //            //string sql = "select RateId, Code, TaxRate, Name from Rates";
-    //            //command = new SQLiteCommand(sql, connection);
-    //            SQLiteDataReader reader = command.ExecuteReader(); //Lê cada registo
-    //            while (reader.Read())
-    //            {
-    //                Rates.Add(new Countrie
-    //                {
-    //                    //RateId = (int)reader["RateId"],
-    //                    //Code = (string)reader["Code"],
-    //                    //Name = (string)reader["Name"],
-    //                    //TaxRate = (double)reader["TaxRate"],
-    //                });
-    //            }
+            try
+            {
+                connection = new SQLiteConnection("DataSource=" + path); //Caminho para fazer a conexação À Base de Dados
+                connection.Open();
 
-    //            connection.Close();
-    //            return Rates;
+                //Country
+                string sqlCommand = "Create table if not exists Countries " +
+                    "(Name varchar(200)," +
+                    "Native_Name varchar(200)," +
+                    "Alpha3Code char(3) PRIMARY KEY," +
+                    "Capital varchar(200)," +
+                    "Region varchar(200)," +
+                    "SubRegion varchar(200)," +
+                    "Area real," +
+                    "Gini real," +
+                    "Population int)";
 
-    //        }
-    //        catch (Exception e)
+                commandCountry = new SQLiteCommand(sqlCommand, connection);
+                commandCountry.ExecuteNonQuery();
 
-    //        {
-    //            dialogService.ShowMessage("Error", e.Message);
-    //            return null;
-    //        }
-    //    }
-        
+                //CountryLanguage
+                sqlCommand = "create table if not exists CountryLanguage(" +
+               "Iso639_2 char(3)," +
+               "Alpha3Code char(3)," +
+               "PRIMARY KEY (Alpha3Code, Iso639_2))";
+
+                commandCountry = new SQLiteCommand(sqlCommand, connection);
+                commandCountry.ExecuteNonQuery();
+                
+                //Language
+                sqlCommand = "Create table if not exists Languages " +
+                    "(Iso639_1 char(3)," +
+                    "Iso639_2 char(3) PRIMARY KEY," + 
+                    "LanguageName string," +
+                    "LanguageNativeName string, " +
+                    "FOREIGN KEY (Iso639_2) REFERENCES CountryLanguage(Iso639_2))";
+
+                commandCountry = new SQLiteCommand(sqlCommand, connection);
+                commandCountry.ExecuteNonQuery();
+
+                //Holiday
+                //sqlCommand = "Create table if not exists Holidays " +
+                //    "(name string," +
+                //    "date string");
+
+                //commandCountry = new SQLiteCommand(sqlCommand, connection);
+                //commandCountry.ExecuteNonQuery();
+
+            }
+            catch (Exception e)
+            {
+                dialogService.ShowMessage("Unable to Create DataService", e.Message);
+            }
+
+        }
+        public async Task SaveDataCountry(List<Country> Countries)
+        {
+            try
+            {
+                List<string> ListOfLanguages = new List<string>();
+
+                foreach (var c in Countries) //Foreach Country in the List ListOfCountries
+                {
+                    CheckSaveDataCountry(c);
+                    
+                    string sql = string.Format("insert into Countries(Name,Native_Name, Alpha3Code, Capital,Region,Subregion,Area,Gini,Population) values ('{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}', '{7}', '{8}')", c.Name, c.NativeName, c.Alpha3Code, c.Capital, c.Region, c.Subregion, c.Area, c.Gini, c.Population);
+                    commandCountry = new SQLiteCommand(sql, connection);
+                    await Task.Run (() => commandCountry.ExecuteNonQuery());
+
+                    foreach(var language in c.Languages)
+                    {
+                        if (!ListOfLanguages.Contains(language.Iso639_2))
+                        {
+                            CheckSaveDataCountryLanguage(language);
+
+                            string sql2 = string.Format("insert into Languages(Iso639_1,Iso639_2,LanguageName,LanguageNativeName) values ('{0}', '{1}', '{2}', '{3}')", language.Iso639_1, language.Iso639_2, language.Name, language.NativeName);
+                            commandCountry = new SQLiteCommand(sql2, connection);
+                            await Task.Run(() => commandCountry.ExecuteNonQuery());
+
+                            string sql3 = string.Format("insert into CountryLanguage(Iso639_2,Alpha3Code) values ('{0}', '{1}')", language.Iso639_2, c.Alpha3Code);
+                            commandCountry = new SQLiteCommand(sql3, connection);
+                            await Task.Run(() => commandCountry.ExecuteNonQuery());
+
+                            ListOfLanguages.Add(language.Iso639_2);
+                        }
+                    }
+                }
+
+                connection.Close();
+                
+            }
+            catch (Exception e)
+            {
+                dialogService.ShowMessage("Unable to Save Countries Data", e.Message);
+            }
+        }
+
+        private void CheckSaveDataCountryLanguage(Language language)
+        {
+            
+            if (language.Name.Contains("'"))
+            {
+                language.Name = language.Name.Replace("'", " ");
+            }
+            if (language.NativeName.Contains("'"))
+            {
+                language.NativeName = language.NativeName.Replace("'", " ");
+            }
+        }
+
+        private void CheckSaveDataCountry(Country c)
+        {
+            if (c.Name.Contains("'"))
+            {
+                c.Name = c.Name.Replace("'", " ");
+            }
+            if (c.NativeName.Contains("'"))
+            {
+                c.NativeName = c.NativeName.Replace("'", " ");
+            }
+            if (c.Alpha3Code.Contains("'"))
+            {
+                c.Alpha3Code = c.Alpha3Code.Replace("'", " ");
+            }
+            if (c.Capital.Contains("'"))
+            {
+                c.Capital = c.Capital.Replace("'", " ");
+            }
+            if (c.Region.Contains("'"))
+            {
+                c.Region = c.Region.Replace("'", " ");
+            }
+            if (c.Subregion.Contains("'"))
+            {
+                c.Subregion = c.Subregion.Replace("'", " ");
+            }
+            if (c.Gini==null)
+            {
+                c.Gini = 0;
+            }
+
+        }
+
+
+        public List<Country> GetLocalDataCountry()
+        {
+            List<Country> Countries = new List<Country>();
+
+            try
+            {
+                string sql = "select Name, Native_Name, Alpha3Code, Capital, Region, Subregion, Area, Gini, Population from Countries";
+                commandCountry = new SQLiteCommand(sql, connection);
+                SQLiteDataReader reader = commandCountry.ExecuteReader(); //Lê cada registo
+
+                while (reader.Read())
+                {
+                    Countries.Add(new Country
+                    {
+                        Name = (string)reader["Name"],
+                        NativeName = (string)reader["Native_Name"],
+                        Alpha3Code = (string)reader["Alpha3Code"],
+                        Capital = (string)reader["Capital"],
+                        Region = (string)reader["Region"],
+                        Subregion = (string)reader["Subregion"],
+                        Area = (double)reader["Area"],
+                        Gini = (double)reader["Gini"],
+                        Population = (int)reader["Population"],
+                    });
+                }
+
+                connection.Close();
+                return Countries;
+
+            }
+            catch (Exception e)
+
+            {
+                dialogService.ShowMessage("Unable to Read ", e.Message);
+                return null;
+            }
+        }
+
     }
 }
