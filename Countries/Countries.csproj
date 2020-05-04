@@ -92,6 +92,7 @@
     <Compile Include="Models\Request.cs" />
     <Compile Include="Models\Response.cs" />
     <Compile Include="Models\Weekday.cs" />
+    <Compile Include="ProgressReport.cs" />
     <Compile Include="Services\ApiService.cs" />
     <Compile Include="Services\DataService.cs" />
     <Compile Include="Services\DialogService.cs" />

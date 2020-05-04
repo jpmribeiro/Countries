@@ -58,8 +58,10 @@ namespace Countries.Services
 
     public class ApiService
     {
-        public async Task<Response> GetCountries(string urlBase, string controller)
+        public async Task<Response> GetCountries(string urlBase, string controller, IProgress<ProgressReport> progress)
         {
+            ProgressReport report = new ProgressReport();
+
             try
             {
                 var client = new HttpClient();
@@ -77,6 +79,10 @@ namespace Countries.Services
                 }
 
                 var Countries = JsonConvert.DeserializeObject<List<Country>>(result);//Moves the results (JSON) to a list
+
+                report.SaveCountries = Countries;
+                report.Percentagem = (report.SaveCountries.Count * 100) / Countries.Count;
+                progress.Report(report);
 
                 return new Response
                 {
@@ -97,6 +103,7 @@ namespace Countries.Services
 
         public async Task<Response> GetHolidays(string urlBase, string controller)
         {
+            
             try
             {
                 var client = new HttpClient();

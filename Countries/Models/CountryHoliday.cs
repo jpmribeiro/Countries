@@ -10,9 +10,9 @@
     {
         public List<Holiday> holidays { get; set; }
 
-        public override string ToString()
-        {
-            return $"{holidays}";
-        }
+        //public override string ToString()
+        //{
+        //    return $"{holidays}";
+        //}
     }
 }

@@ -32,6 +32,7 @@
         public string Flag { get; set; }
         public List<RegionalBloc> RegionalBlocs { get; set; }
         public string Cioc { get; set; }
+        public List<Holiday> holidays { get; set; } = new List<Holiday>();
 
         public override string ToString()
         {

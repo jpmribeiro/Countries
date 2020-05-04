@@ -59,29 +59,37 @@
                 sqlCommand = "create table if not exists CountryLanguage(" +
                "Iso639_2 char(3)," +
                "Alpha3Code char(3)," +
-               "PRIMARY KEY (Alpha3Code, Iso639_2))";
+               "PRIMARY KEY (Alpha3Code, Iso639_2)," +
+               "FOREIGN KEY(Iso639_2) REFERENCES Language(Iso639_2)," +
+               "FOREIGN KEY (Alpha3Code) REFERENCES Country(Alpha3Code))";
 
                 commandCountry = new SQLiteCommand(sqlCommand, connection);
                 commandCountry.ExecuteNonQuery();
                 
                 //Language
                 sqlCommand = "Create table if not exists Languages " +
-                    "(Iso639_1 char(3)," +
+                    "(Iso639_1 char(2)," +
                     "Iso639_2 char(3) PRIMARY KEY," + 
-                    "LanguageName string," +
-                    "LanguageNativeName string, " +
-                    "FOREIGN KEY (Iso639_2) REFERENCES CountryLanguage(Iso639_2))";
+                    "Name Varchar(100)," +
+                    "NativeName Varchar(100))";
 
                 commandCountry = new SQLiteCommand(sqlCommand, connection);
                 commandCountry.ExecuteNonQuery();
 
-                //Holiday
-                //sqlCommand = "Create table if not exists Holidays " +
-                //    "(name string," +
-                //    "date string");
+                //CountryHoliday
 
-                //commandCountry = new SQLiteCommand(sqlCommand, connection);
-                //commandCountry.ExecuteNonQuery();
+                sqlCommand = "Create table if not exists CountryHoliday " +
+                    "(Alpha3Code char(3), " +
+                    "Code char(3),";
+
+                //Holiday
+                sqlCommand = "Create table if not exists Holidays " +
+                    "(Code char(3)," +
+                    "name string," +
+                    "date string,)";
+
+                commandCountry = new SQLiteCommand(sqlCommand, connection);
+                commandCountry.ExecuteNonQuery();
 
             }
             catch (Exception e)
@@ -110,7 +118,7 @@
                         {
                             CheckSaveDataCountryLanguage(language);
 
-                            string sql2 = string.Format("insert into Languages(Iso639_1,Iso639_2,LanguageName,LanguageNativeName) values ('{0}', '{1}', '{2}', '{3}')", language.Iso639_1, language.Iso639_2, language.Name, language.NativeName);
+                            string sql2 = string.Format("insert into Languages(Iso639_1,Iso639_2,Name,NativeName) values ('{0}', '{1}', '{2}', '{3}')", language.Iso639_1, language.Iso639_2, language.Name, language.NativeName);
                             commandCountry = new SQLiteCommand(sql2, connection);
                             await Task.Run(() => commandCountry.ExecuteNonQuery());
 
@@ -131,10 +139,8 @@
                 dialogService.ShowMessage("Unable to Save Countries Data", e.Message);
             }
         }
-
         private void CheckSaveDataCountryLanguage(Language language)
         {
-            
             if (language.Name.Contains("'"))
             {
                 language.Name = language.Name.Replace("'", " ");
@@ -144,7 +150,6 @@
                 language.NativeName = language.NativeName.Replace("'", " ");
             }
         }
-
         private void CheckSaveDataCountry(Country c)
         {
             if (c.Name.Contains("'"))
@@ -177,34 +182,52 @@
             }
 
         }
-
-
-        public List<Country> GetLocalDataCountry()
+        public List<Country> GetLocalDataCountry(IProgress<ProgressReport> progress)
         {
             List<Country> Countries = new List<Country>();
 
             try
             {
-                string sql = "select Name, Native_Name, Alpha3Code, Capital, Region, Subregion, Area, Gini, Population from Countries";
-                commandCountry = new SQLiteCommand(sql, connection);
-                SQLiteDataReader reader = commandCountry.ExecuteReader(); //Lê cada registo
+                string sqlCountries = "select Name, Native_Name, Alpha3Code, Capital, Region, Subregion, Area, Gini, Population from Countries";
+                commandCountry = new SQLiteCommand(sqlCountries, connection);
+                SQLiteDataReader readerCountries = commandCountry.ExecuteReader(); //Lê cada registo
 
-                while (reader.Read())
+                while (readerCountries.Read())
                 {
                     Countries.Add(new Country
                     {
-                        Name = (string)reader["Name"],
-                        NativeName = (string)reader["Native_Name"],
-                        Alpha3Code = (string)reader["Alpha3Code"],
-                        Capital = (string)reader["Capital"],
-                        Region = (string)reader["Region"],
-                        Subregion = (string)reader["Subregion"],
-                        Area = (double)reader["Area"],
-                        Gini = (double)reader["Gini"],
-                        Population = (int)reader["Population"],
+                        Name = (string)readerCountries["Name"],
+                        NativeName = (string)readerCountries["Native_Name"],
+                        Alpha3Code = (string)readerCountries["Alpha3Code"],
+                        Capital = (string)readerCountries["Capital"],
+                        Region = (string)readerCountries["Region"],
+                        Subregion = (string)readerCountries["Subregion"],
+                        Area = (double)readerCountries["Area"],
+                        Gini = (double)readerCountries["Gini"],
+                        Population = (int)readerCountries["Population"],
+                        Languages = new List<Language>(),
                     });
                 }
 
+                readerCountries.Close();
+
+                foreach(Country c in Countries)
+                {
+                    string sqlLanguages = $"SELECT Iso639_1,Iso639_2,LanguageName,LanguageNativeName FROM Languages INNER JOIN CountryLanguage ON Languages.Iso639_2=CountryLanguage.Iso639_2 WHERE Alpha3Code={c.Alpha3Code}";
+                    SQLiteDataReader readerLanguages = commandCountry.ExecuteReader(); 
+
+                    while (readerLanguages.Read())
+                    {
+                        c.Languages.Add(new Language
+                        {
+                            Iso639_1 = (string)readerLanguages["Iso639_1"],
+                            Iso639_2 = (string)readerLanguages["Iso639_2"],
+                            Name = (string)readerLanguages["Name"],
+                            NativeName = (string)readerLanguages["NativeName"],
+                        });
+                    }
+                }
+               
                 connection.Close();
                 return Countries;
 

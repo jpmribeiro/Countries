@@ -338,21 +338,23 @@ namespace Countries
                 labelReport.Content = string.Format("Data uploaded from a local repository.");
             }
 
-            ProgressBarReport.Value = 100;
 
         }
 
         private async Task LoadApiCountries()
         {
-            ProgressBarReport.Value = 0;
-            var response = await apiService.GetCountries("http://restcountries.eu", "/rest/v2/all");
+            Progress<ProgressReport> progress = new Progress<ProgressReport>();
+            progress.ProgressChanged += ReportProgress;
+            var response = await apiService.GetCountries("http://restcountries.eu", "/rest/v2/all", progress);
             ListOfCountries = (List<Country>)response.Result;
             ////dataService.DeleteData();
-            var stopwatch = Stopwatch.StartNew();
-            await dataService.SaveDataCountry(ListOfCountries);
-            stopwatch.Stop();
-            var elapsped = stopwatch.Elapsed;
-            MessageBox.Show(elapsped.ToString());
+            //await dataService.SaveDataCountry(ListOfCountries);
+            
+        }
+
+        private void ReportProgress(object sender, ProgressReport e)
+        {
+            ProgressBarReport.Value = e.Percentagem;
         }
 
         private async Task LoadHoliday(string c) //FAZER COM QUE SO ENTRE AQUI SE HOUVER LIGACAO A NET
@@ -374,6 +376,8 @@ namespace Countries
 
                 listBoxCountriesHolidays.ItemsSource = listaux;
                 countHolidays.Content = $"{auxcount} Holidays:";
+                Country C = new Country();
+                C.holidays = listaux;
             }
             else
             {
@@ -545,7 +549,7 @@ namespace Countries
         private void LoadLocalCountries()
         {
             ListOfCountries = dataService.GetLocalDataCountry(); //Returns a Local Repository containing The various API's Data
-            ////dataService.DeleteData();
+            //dataService.DeleteData();
             var stopwatch = Stopwatch.StartNew();
             stopwatch.Stop();
             var elapsped = stopwatch.Elapsed;
