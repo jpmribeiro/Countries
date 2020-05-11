@@ -152,43 +152,43 @@ namespace Countries.Services
             }
         }
 
-        //public async Task<Response> GetRates(string urlBase, string controller) //Vai Buscar as taxas
-        //{
-        //    try
-        //    {
-        //        var client = new HttpClient();//Fazer a Ligação Http 
-        //        client.BaseAddress = new Uri(urlBase); //Endereço onde se encontra a API
-        //        var response = await client.GetAsync(controller); //Controlador da API
-        //        var result = await response.Content.ReadAsStringAsync();//Carrega os resultados sob a forma de string para o objecto result
+        public async Task<Response> GetRates(string urlBase, string controller) 
+        {
+            try
+            {
+                var client = new HttpClient();
+                client.BaseAddress = new Uri(urlBase);
+                var response = await client.GetAsync(controller);
+                var result = await response.Content.ReadAsStringAsync();
 
-        //        if (!response.IsSuccessStatusCode)
-        //        {
-        //            return new Response
-        //            {
-        //                IsSucess = false,
-        //                Message = result
-        //            };
-        //        }
+                if (!response.IsSuccessStatusCode)
+                {
+                    return new Response
+                    {
+                        IsSucess = false,
+                        Message = result
+                    };
+                }
 
-        //        var rates = JsonConvert.DeserializeObject<List<Rate>>(result);//Passa os resultados (JSON) para uma lista que guarda dados do tipo Rate
+                var rates = JsonConvert.DeserializeObject<List<Rates>>(result);
 
-        //        return new Response
-        //        {
-        //            IsSucess = true,
-        //            Result = rates,
+                return new Response
+                {
+                    IsSucess = true,
+                    Result = rates,
+                };
 
-        //        };
+            }
+            catch (Exception ex)
+            {
+                return new Response
+                {
+                    IsSucess = false,
+                    Message = ex.Message,
+                };
+            }
+        }
 
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return new Response
-        //        {
-        //            IsSucess = false,
-        //            Message = ex.Message,
-        //        };
-        //    }
-        //}
     }
 }
 

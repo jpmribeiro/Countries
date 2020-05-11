@@ -18,15 +18,15 @@
         <StackPanel Margin="34,156,609,43">
             <Label x:Name="labelReport" Content="Report" RenderTransformOrigin="1.489,-1.19" Height="29" HorizontalAlignment="Center" Margin="62,0,100,0" Foreground="#FF327FDC" Width="353"/>
             <StackPanel Margin="62,0,76,0">
-                <StackPanel Orientation="Horizontal" Height="59" Margin="0,0,10,0">
-                    <Label FontWeight="Bold" Margin="0,32,0,0" Content="&#x9;Type a Country Name:" Width="192"/>
-                    <TextBox x:Name="TxtSearchCountry" VerticalAlignment="Center" Background="#FFF1E8E8" TextChanged="TxtSearchCountry_TextChanged" Margin="10,32,0,10" HorizontalAlignment="Left" Width="152" Height="17"/>
+                <StackPanel Orientation="Horizontal" Height="61" Margin="0,0,10,0">
+                    <Label FontWeight="Bold" Margin="0,10,0,20" Content="&#x9;Type a Country Name:" Width="195"/>
+                    <TextBox x:Name="TxtSearchCountry" VerticalAlignment="Center" Background="#FFF1E8E8" TextChanged="TxtSearchCountry_TextChanged" Margin="10,11,0,30" HorizontalAlignment="Left" Width="128" Height="20"/>
                 </StackPanel>
             </StackPanel>
-            <ListBox  x:Name="listBoxCountries" Height="329" SelectionChanged="listBoxCountries_SelectionChanged" Margin="62,0,163,0" HorizontalContentAlignment="Center"/>
+            <ListBox  x:Name="listBoxCountries" Height="329" SelectionChanged="listBoxCountries_SelectionChanged" Margin="62,0,100,0" HorizontalContentAlignment="Center"/>
         </StackPanel>
-        <StackPanel Margin="608,158,0,43" HorizontalAlignment="Left" Width="484">
-            <TabControl Margin="10,0" Height="440">
+        <StackPanel Margin="608,158,0,10" HorizontalAlignment="Left" Width="484">
+            <TabControl Margin="10,0" Height="449">
                 <TabItem Header="Images" Foreground="#FF327FDC">
                     <StackPanel  Orientation="Vertical">
                         <Separator Height="60" Background="Transparent"/>
@@ -77,12 +77,56 @@
                 </TabItem>
                 <TabItem Header="Holidays" Foreground="#FF327FDC">
                     <StackPanel>
-                        <Label x:Name="countHolidays" FontWeight="Bold"/>
-                        <ListBox x:Name="listBoxCountriesHolidays" Height="404" BorderBrush="Transparent" HorizontalAlignment="Center"/>
+                        <Label x:Name="countHolidays" Foreground="#FF327FDC" HorizontalAlignment="Center" FontWeight="Bold"/>
+                        <ListBox x:Name="listBoxCountriesHolidays" Height="404" BorderBrush="Transparent" HorizontalAlignment="Center" HorizontalContentAlignment="Center"/>
                     </StackPanel>
                 </TabItem>
-                <TabItem Header="Info3" Foreground="#FF327FDC">
-                    <StackPanel/>
+                <TabItem Header="Currency" Foreground="#FF327FDC">
+                    <StackPanel Margin="0,0,0,-30">
+                        <StackPanel Orientation="Vertical" Height="112" Margin="1,0,9,0" RenderTransformOrigin="0.5,0.5">
+                            <StackPanel.RenderTransform>
+                                <TransformGroup>
+                                    <ScaleTransform/>
+                                    <SkewTransform AngleX="0.939"/>
+                                    <RotateTransform/>
+                                    <TranslateTransform X="0.484"/>
+                                </TransformGroup>
+                            </StackPanel.RenderTransform>
+                            <Separator Height="33" BorderBrush="Transparent" RenderTransformOrigin="0.5,0.5">
+                                <Separator.RenderTransform>
+                                    <TransformGroup>
+                                        <ScaleTransform ScaleY="-1"/>
+                                        <SkewTransform/>
+                                        <RotateTransform/>
+                                        <TranslateTransform/>
+                                    </TransformGroup>
+                                </Separator.RenderTransform>
+                            </Separator>
+                            <TextBlock x:Name="txtCountryCurrency" HorizontalAlignment="Center" TextAlignment="Center"></TextBlock>
+                            <Separator BorderBrush="Transparent"></Separator>
+                            <ListBox x:Name="ListBoxCountryCurrency" Height="55" BorderBrush="Transparent" Margin="184,0,169,0" HorizontalContentAlignment="Center" Width="95"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Height="59" Margin="0,0,10,0">
+                            <Label FontWeight="Bold" Margin="0,32,0,0" Content="&#x9;Pick a Origin Curency, a destination Currency and a Value" HorizontalAlignment="Center" Foreground="#FF327FDC" Width="439"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Height="59" Margin="0,0,10,0">
+                            <Label FontWeight="Bold" Margin="0,32,0,0" Content="&#x9;Country Currency:" Width="192"/>
+                            <ComboBox x:Name="OriginValue" Margin="0,32,0,0" Width="184"></ComboBox>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Height="59" Margin="0,0,10,0">
+                            <Label FontWeight="Bold" Margin="0,10" Content="&#x9;Destination Currency:" Width="192"/>
+                            <ComboBox x:Name="DestinationValue" Margin="0,10,0,22" Width="184"></ComboBox>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Height="61" Margin="0,0,10,0">
+                            <Label FontWeight="Bold" Margin="0,0,0,27" Content="&#x9;Value:" Width="192"/>
+                            <TextBox x:Name="txtValue" Width="185" Margin="0,10,0,27"></TextBox>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Height="25" Margin="155,0,150,0" Width="153">
+                            <Button x:Name="BtnConvert" Width="153" Content="Convert" HorizontalContentAlignment="Center" Click="BtnConvert_Click"/>
+                        </StackPanel>
+                        <Separator></Separator>
+                        <TextBlock x:Name="TxtResult" Width="450" HorizontalAlignment="Center" TextAlignment="Center" Foreground="#FF327FDC" Margin="4,0,4,63" Height="26"/>
+                    </StackPanel>
                 </TabItem>
             </TabControl>
         </StackPanel>

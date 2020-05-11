@@ -1,4 +1,4 @@
-﻿namespace Countries.Models
+﻿namespace Countries
 {
     using System;
     using System.Collections.Generic;
@@ -6,15 +6,16 @@
     using System.Text;
     using System.Threading.Tasks;
 
-    public class Currency
+    public class Rates
     {
+        public int RateId { get; set; }
         public string Code { get; set; }
-        public string CurrencyName { get; set; }
-        public string Symbol { get; set; }
-
+        public double TaxRate { get; set; }
+        public string Name { get; set; }
         public override string ToString()
         {
-            return $"{Code}, ({Symbol})";
+            return $"{Code}, ({Name})";
         }
+
     }
 }

@@ -4,33 +4,18 @@
     using Models;
     using System;
     using System.Collections.Generic;
-    using System.Text;
     using System.Threading.Tasks;
     using System.Windows;
     using System.Windows.Controls;
-    using System.Windows.Data;
-    using System.Windows.Documents;
-    using System.Windows.Input;
     using System.Windows.Media;
     using System.Windows.Media.Imaging;
-    using System.Windows.Navigation;
-    using System.Windows.Shapes;
     using System.IO;
     using Svg;
     using System.Globalization;
     using System.Net;
     using System.Drawing.Imaging;
-    using System.Diagnostics;
-    using System.Drawing;
     using System.Text.RegularExpressions;
     using System.Web;
-    using Newtonsoft.Json;
-    using HtmlAgilityPack;
-    using NPOI.POIFS.FileSystem;
-    using System.Xml;
-    using System.Linq;
-    using MySqlX.XDevAPI.Common;
-    using Cambios.Modelos;
 
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -39,6 +24,7 @@
     {
         private List<Country> ListOfCountries;
         //private List<CountryHoliday> ListOfCountryHolidays;
+        private List<Rates> ListOfApiRates;
         private readonly ApiService apiService;
         private readonly NetworkService networkService;
         private readonly DialogService dialogService;
@@ -92,6 +78,7 @@
             }
             else
             {
+                await LoadApiRates();
                 await LoadApiCountries(); //If there is Internet Connection
                 load = true;
 
@@ -102,7 +89,7 @@
 
             }
 
-            if (ListOfCountries.Count == 0) 
+            if (ListOfCountries.Count == 0)
             {
                 labelReport.Content = "There Is no Internet Connection at the moment" + Environment.NewLine +
                    "And there is not a local repository" + Environment.NewLine +
@@ -128,7 +115,6 @@
                 labelReport.Content = string.Format("(Data uploaded from a local repository({0:F})).", DateTime.Now.ToString("dddd, dd MMMM yyyy", new System.Globalization.CultureInfo("en-EN")));
             }
 
-
         }
 
         /// <summary>
@@ -142,14 +128,32 @@
             var response = await apiService.GetCountries("http://restcountries.eu", "/rest/v2/all", progress);
             ListOfCountries = (List<Country>)response.Result;
             ////dataService.DeleteData();
-            //await dataService.SaveDataCountry(ListOfCountries);
-            
+            await dataService.SaveDataCountry(ListOfCountries);
+
         }
+
+        /// <summary>
+        ///  /// <summary>
+        /// Calls cambiosrafa API
+        /// </summary>
+        /// <returns></returns>
+        /// </summary>
+        /// <returns></returns>
+        private async Task LoadApiRates()
+        {
+            var response = await apiService.GetRates("https://cambiosrafa.azurewebsites.net", "/api/Rates");
+            ListOfApiRates = (List<Rates>)response.Result;
+
+            //dataService.DeleteData(); 
+            //dataService.SaveData(Rates); 
+        }
+
         /// <summary>
         /// ProgressBarRepor Value Event
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
+        /// 
         private void ReportProgress(object sender, ProgressReport e)
         {
             ProgressBarReport.Value = e.Percentagem;
@@ -203,172 +207,122 @@
 
             Country selectedCountry = (Country)listBoxCountries.SelectedItem;
 
-
             if (selectedCountry != null)
             {
                 List<Language> selectedCountryLanguage = (selectedCountry.Languages);
                 ListBoxLanguages.ItemsSource = selectedCountryLanguage;
             }
 
-            if (selectedCountry != null)
-            {
-                this.TxtBlockName.Text = selectedCountry.Name;
-                this.TxtBlockNativeName.Text = selectedCountry.NativeName;
-                this.TxtBlockCapital.Text = selectedCountry.Capital;
-                this.TxtBlockRegion.Text = selectedCountry.Region;
-                this.TxtBlockSubRegion.Text = selectedCountry.Subregion;
-                this.TxtBlockArea.Text = selectedCountry.Area.GetValueOrDefault().ToString() + " Km2";
-                this.TxtBlockGini.Text = selectedCountry.Gini.GetValueOrDefault().ToString();
-                this.TxtBlockPopulation.Text = selectedCountry.Population.ToString("#,#", CultureInfo.InvariantCulture) + " Inhabitants";
-
-                string flagName = selectedCountry.Alpha3Code;
-                await LoadHoliday(selectedCountry.Alpha2Code);
-
-                try
-                {
-                    BitmapImage img = new BitmapImage();
-                    img.BeginInit();
-
-                    if (File.Exists(Environment.CurrentDirectory + "/Flags" + $"/{flagName}.jpg"))
-                    {
-                        img.UriSource = new Uri(Environment.CurrentDirectory + "/Flags" + $"/{flagName}.jpg");
-                    }
-                    else if (!File.Exists(Environment.CurrentDirectory + "/Flags" + $"/{flagName}.jpg"))
-                    {
-                        img.UriSource = new Uri(Environment.CurrentDirectory + "/Resources/NoImageAvailable.jpg");
-                        //FlagImage.Stretch = Stretch.None;
-                    }
-
-                    img.EndInit();
-                    FlagImage.Source = img;
-                    FlagImage.Stretch = Stretch.Fill;
-
-                    //RegionImage:
-
-                    string Region = selectedCountry.Region.ToString();
-
-                    BitmapImage imgregion = new BitmapImage();
-                    imgregion.BeginInit();
-
-                    if (selectedCountry.Region == "Europe")
-                    {
-                        imgregion.UriSource = new Uri(Environment.CurrentDirectory + "/Regions" + "/europe.png");
-                    }
-                    if (selectedCountry.Region == "Americas")
-                    {
-                        imgregion.UriSource = new Uri(Environment.CurrentDirectory + "/Regions" + "/americas.png");
-                    }
-                    if (selectedCountry.Region == "Oceania")
-                    {
-                        imgregion.UriSource = new Uri(Environment.CurrentDirectory + "/Regions" + "/oceania.png");
-                    }
-                    if (selectedCountry.Region == "Africa")
-                    {
-                        imgregion.UriSource = new Uri(Environment.CurrentDirectory + "/Regions" + "/africa.png");
-                    }
-                    if (selectedCountry.Region == "Polar")
-                    {
-                        imgregion.UriSource = new Uri(Environment.CurrentDirectory + "/Regions" + "/antarctida.png");
-                    }
-                    if (selectedCountry.Region == "Asia")
-                    {
-                        imgregion.UriSource = new Uri(Environment.CurrentDirectory + "/Regions" + "/asia.png");
-                    }
-
-                    imgregion.EndInit();
-                    RegionImage.Source = imgregion;
-
-
-                    ////Wikiepedia API 
-
-                    //WebClient client = new WebClient();
-                    //var a = client.DownloadString("https://en.wikipedia.org/w/api.php?action=opensearch&search=" + $"{selectedCountry.Name}");
-                    //var b = JsonConvert.DeserializeObject(a);
-                    //string[] c = b.ToString().Split('[');
-                    //var i = c[3];
-                    //TxtDescription.Text = i.ToString();
-
-                    //string url = "http://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&explaintext=1&titles=stack%20overflow";
-                    //WebClient wc = new WebClient();
-                    //wc.Encoding = Encoding.UTF8;
-                    //string html = wc.DownloadString(url);
-                    //HtmlDocument doc = new HtmlDocument();
-                    //doc.LoadHtml(html);
-
-                    //List<string> lista = new List<string>();
-
-                    //foreach (HtmlNode node in doc.DocumentNode.Descendants("p"))
-                    //{
-                    //    lista.Add(node.InnerText);
-                    //}
-
-                    //TxtDescription.Text = node.
-                    //listboxdescription.ItemsSource = lista;
-
-                    //WebClient client = new WebClient();
-
-                    //using (Stream stream = client.OpenRead("http://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&explaintext=1&titles=stack%20overflow"))
-                    //using (StreamReader reader = new StreamReader(stream))
-                    //{
-                    //    JsonSerializer ser = new JsonSerializer();
-                    //    Result result = ser.Deserialize<Result>(new JsonTextReader(reader));
-
-                    //    foreach (Page page in result.query.pages.Values)
-                    //        Console.WriteLine(page.extract);
-
-                    //}
-
-                    //string[] stringArray = new string[10000];
-                    //string url = "https://en.wikipedia.org/w/api.php?format=xml&action=query&prop=extract&titles=" + $"{selectedCountry.Name}" + "&redirects=true";
-                    //WebClient wc = new WebClient();
-                    //wc.Encoding = Encoding.UTF8;
-                    //string html = wc.DownloadString(url);
-                    //HtmlDocument doc = new HtmlDocument();
-                    //doc.LoadHtml(html);
-                    //foreach (HtmlNode node in doc.DocumentNode.Descendants("p"))
-                    //{
-                    //    TxtDescription.Text += node.InnerText;
-                    //}
-
-                    //var webclient = new WebClient();
-                    //var pageSourceCode = webclient.DownloadString("https://en.wikipedia.org/w/api.php?format=xml&action=query&prop=extract&titles=" + $"{selectedCountry.Name}" + "&redirects=true");
-                    //XmlDocument doc = new XmlDocument();
-                    //doc.LoadXml(pageSourceCode);
-
-                    //var node = doc.GetElementsByTagName("extract")[0];
-
-                    //try
-                    //{
-                    //    string ss = node.InnerText;
-                    //    Regex regex = new Regex("\\<[^\\>]*\\>");
-                    //    string.Format("Before:{0}", ss);
-                    //    ss = regex.Replace(ss, string.Empty);
-                    //    string result = String.Format(ss);
-                    //    TxtDescription.Text += result;
-                    //}
-                    //catch
-                    //{
-                    //    TxtDescription.Text = "Error";
-                    //}
-
-                    //}
-                    //catch
-                    //{
-
-                    //}
-
-
-                    listBoxCountries.ItemsSource = ListOfCountries;
-
-                }
-                catch
-                {
-
-                }
+            this.TxtBlockName.Text = selectedCountry.Name;
+            this.TxtBlockNativeName.Text = selectedCountry.NativeName;
+            this.TxtBlockCapital.Text = selectedCountry.Capital;
+            this.TxtBlockRegion.Text = selectedCountry.Region;
+            this.TxtBlockSubRegion.Text = selectedCountry.Subregion;
+            this.TxtBlockArea.Text = selectedCountry.Area.GetValueOrDefault().ToString() + " Km2";
+            this.TxtBlockGini.Text = selectedCountry.Gini.GetValueOrDefault().ToString();
+            this.TxtBlockPopulation.Text = selectedCountry.Population.ToString("#,#", CultureInfo.InvariantCulture) + " Inhabitants";
 
             CheckData();
 
+            string flagName = selectedCountry.Alpha3Code;
+            await LoadHoliday(selectedCountry.Alpha2Code);
+
+            try
+            {
+
+                //FlagImage
+                BitmapImage img = new BitmapImage();
+                img.BeginInit();
+
+                if (File.Exists(Environment.CurrentDirectory + "/Flags" + $"/{flagName}.jpg"))
+                {
+                    img.UriSource = new Uri(Environment.CurrentDirectory + "/Flags" + $"/{flagName}.jpg");
+                }
+                else if (!File.Exists(Environment.CurrentDirectory + "/Flags" + $"/{flagName}.jpg"))
+                {
+                    img.UriSource = new Uri(Environment.CurrentDirectory + "/Resources/NoImageAvailable.jpg");
+                    //FlagImage.Stretch = Stretch.None;
+                }
+
+                //RegionImage:
+
+                img.EndInit();
+                FlagImage.Source = img;
+                FlagImage.Stretch = Stretch.Fill;
+
+                string Region = selectedCountry.Region.ToString();
+
+                BitmapImage imgregion = new BitmapImage();
+                imgregion.BeginInit();
+
+                if (selectedCountry.Region == "Europe")
+                {
+                    imgregion.UriSource = new Uri(Environment.CurrentDirectory + "/Regions" + "/europe.png");
+                }
+                if (selectedCountry.Region == "Americas")
+                {
+                    imgregion.UriSource = new Uri(Environment.CurrentDirectory + "/Regions" + "/americas.png");
+                }
+                if (selectedCountry.Region == "Oceania")
+                {
+                    imgregion.UriSource = new Uri(Environment.CurrentDirectory + "/Regions" + "/oceania.png");
+                }
+                if (selectedCountry.Region == "Africa")
+                {
+                    imgregion.UriSource = new Uri(Environment.CurrentDirectory + "/Regions" + "/africa.png");
+                }
+                if (selectedCountry.Region == "Polar")
+                {
+                    imgregion.UriSource = new Uri(Environment.CurrentDirectory + "/Regions" + "/antarctida.png");
+                }
+                if (selectedCountry.Region == "Asia")
+                {
+                    imgregion.UriSource = new Uri(Environment.CurrentDirectory + "/Regions" + "/asia.png");
+                }
+
+                imgregion.EndInit();
+                RegionImage.Source = imgregion;
+
+                listBoxCountries.ItemsSource = ListOfCountries;
+
             }
+            catch
+            {
+                MessageBox.Show("Failed When Presenting Selected Country Flag and Regional Bloc Location Image");
+            }
+
+            int auxcountrates = 0;
+
+            List<Rates> listauxrate = new List<Rates>();
+
+            List<Currency> selectedCountryCurrency = (selectedCountry.Currencies);
+
+            ListBoxCountryCurrency.ItemsSource = selectedCountryCurrency;
+
+            foreach (Rates r in ListOfApiRates)
+            {
+                foreach (Currency c in selectedCountryCurrency)
+                {
+                    if (c.Code == r.Code)
+                    {
+                        listauxrate.Add(r);
+                        auxcountrates += 1;
+                    }
+                }
+            }
+
+            OriginValue.ItemsSource = listauxrate;
+            DestinationValue.ItemsSource = ListOfApiRates;
+
+            if (auxcountrates == 1)
+            {
+                txtCountryCurrency.Text = $"{selectedCountry.Name} has {auxcountrates} Currency";
+            }
+            if (auxcountrates > 1)
+            {
+                txtCountryCurrency.Text = $"{selectedCountry.Name} has {auxcountrates} Currencies";
+            }
+
         }
 
         /// <summary>
@@ -511,5 +465,52 @@
             form.Show();
         }
 
+        /// <summary>
+        /// Converts the typed value to a destiny currency
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void BtnConvert_Click(object sender, RoutedEventArgs e)
+        {
+            Convert();
+        }
+
+        /// <summary>
+        /// Converts a Int Value from a given Currency to another Currency
+        /// </summary>
+        private void Convert()
+        {
+            if (string.IsNullOrEmpty(txtValue.Text))
+            {
+                dialogService.ShowMessage("Error", "Type a Value to Convert");
+                return;
+            }
+
+            decimal value;
+
+            if (!decimal.TryParse(txtValue.Text, out value))
+            {
+                dialogService.ShowMessage("Error", "Typed Value Must be a Intenger");
+                return;
+            }
+
+            if (OriginValue.SelectedItem == null)
+            {
+                dialogService.ShowMessage("Error", "Choose a Currency of Origin to Convert");
+                return;
+            }
+
+            if (DestinationValue.SelectedItem == null)
+            {
+                dialogService.ShowMessage("Error", "Choose a Currency of Destiny to Convert");
+                return;
+            }
+
+            var taxaOrigem = (Rates)OriginValue.SelectedItem;
+            var taxaDestino = (Rates)DestinationValue.SelectedItem;
+            var valorConvertido = value / (decimal)taxaOrigem.TaxRate * (decimal)taxaDestino.TaxRate;
+            TxtResult.Text = string.Format("{0} {1:C2} = {2} {3:C2}", taxaOrigem.Code, value, taxaDestino.Code, valorConvertido);
+
+        }
     }
 }

@@ -77,16 +77,52 @@
                 commandCountry.ExecuteNonQuery();
 
                 //CountryHoliday
-
                 sqlCommand = "Create table if not exists CountryHoliday " +
                     "(Alpha3Code char(3), " +
-                    "Code char(3))";
+                    "Code char(3))" +
+                    "FOREIGN KEY(Code) REFERENCES Holiday(Code)," +
+                    "FOREIGN KEY(Alpha3Code) REFERENCES Country(Alpha3Code),";
+
+                commandCountry = new SQLiteCommand(sqlCommand, connection);
+                commandCountry.ExecuteNonQuery();
 
                 //Holiday
                 sqlCommand = "Create table if not exists Holidays " +
                     "(Code char(3)," +
-                    "name string," +
-                    "date string)";
+                    "name varchar(100)," +
+                    "date varchar(100)";
+
+                commandCountry = new SQLiteCommand(sqlCommand, connection);
+                commandCountry.ExecuteNonQuery();
+
+                //Currency
+
+                sqlCommand = "Create table if not exists Currency " +
+                    "(Code char(3)," +
+                    "CurrencyName varchar(100)," +
+                    "Symbol char(3))";
+
+                commandCountry = new SQLiteCommand(sqlCommand, connection);
+                commandCountry.ExecuteNonQuery();
+
+                //CountryCurrency
+                sqlCommand = "Create table if not exists CountryCurrency " +
+                   "(Alpha3Code char(3)," +
+                   "CurrencyCode char(3)," +
+                   "RateCode char(3)," +
+                   "FOREIGN KEY(Alpha3Code) REFERENCES Country(Alpha3Code)," +
+                   "FOREIGN KEY(CurrencyCode) REFERENCES Currency(Code)," +
+                   "FOREIGN KEY(RatesCode) REFERENCES Rates(Code),";
+
+                commandCountry = new SQLiteCommand(sqlCommand, connection);
+                commandCountry.ExecuteNonQuery();
+
+                //Rate
+                sqlCommand = "Create table if not exists Rates " +
+                  "(RateId Int UNIQUE PRIMARY KEY" +
+                  "Code char(3)," +
+                  "double TaxRate," +
+                  "Name Varchar(100))";
 
                 commandCountry = new SQLiteCommand(sqlCommand, connection);
                 commandCountry.ExecuteNonQuery();
@@ -104,7 +140,9 @@
             {
                 List<string> ListOfLanguages = new List<string>();
 
-                foreach (var c in Countries) //Foreach Country in the List ListOfCountries
+                List<string> ListOfCurrencies = new List<string>();
+
+                foreach (var c in Countries) 
                 {
                     CheckSaveDataCountry(c);
                     
@@ -129,6 +167,25 @@
                             ListOfLanguages.Add(language.Iso639_2);
                         }
                     }
+
+                    //foreach (var Currency in c.Currencies)
+                    //{
+                    //    if (!ListOfCurrencies.Contains(Currency.Code))
+                    //    {
+                    //        CheckSaveDataCountryLanguage(Currency);
+
+                    //        string sql4 = string.Format("insert into Languages(Iso639_1,Iso639_2,Name,NativeName) values ('{0}', '{1}', '{2}', '{3}')", language.Iso639_1, language.Iso639_2, language.Name, language.NativeName);
+                    //        commandCountry = new SQLiteCommand(sql2, connection);
+                    //        await Task.Run(() => commandCountry.ExecuteNonQuery());
+
+                    //        string sql5 = string.Format("insert into CountryLanguage(Iso639_2,Alpha3Code) values ('{0}', '{1}')", language.Iso639_2, c.Alpha3Code);
+                    //        commandCountry = new SQLiteCommand(sql3, connection);
+                    //        await Task.Run(() => commandCountry.ExecuteNonQuery());
+
+                    //        ListOfLanguages.Add(language.Iso639_2);
+                    //    }
+                    //}
+
                 }
 
                 connection.Close();
