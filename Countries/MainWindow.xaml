@@ -5,52 +5,105 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Countries"
         mc:Ignorable="d"
-        Title="COUNTRIES" Height="650" Width="1200" ResizeMode="NoResize" SizeToContent="WidthAndHeight" Topmost="False" WindowState="Normal" Icon="./Resources/CountriesIcon.png">
-    <Grid>
-        <ProgressBar x:Name="ProgressBarReport" Height="14" ValueChanged="ProgressBarReport_ValueChanged" Foreground="#FF065BB0" Margin="0,0,0,607" />
-        <StackPanel Margin="10,47,806,10">
-            <TextBox x:Name="TxtSearchCountry" Background="#FFF1E8E8" TextChanged="TxtSearchCountry_TextChanged" Margin="100,0,0,0" HorizontalAlignment="Left" Width="160" Height="20"/>
-            <ListBox  x:Name="listBoxCountries" Height="509" SelectionChanged="listBoxCountries_SelectionChanged" Margin="20,0,0,0" HorizontalAlignment="Left" Width="341"/>
-            <Label x:Name="labelReport" Content="Report" RenderTransformOrigin="0.5,0.5"/>
+        Title="COUNTRIES" Height="650" Width="1158" ResizeMode="NoResize" SizeToContent="WidthAndHeight" Topmost="False" WindowState="Normal" Icon="./Resources/CountriesIcon.png" WindowStartupLocation="CenterScreen" WindowStyle="None">
+    <Grid Margin="0,0,0,9">
+        <ProgressBar x:Name="ProgressBarReport" Margin="0,100,0,520" >
+            <ProgressBar.Foreground>
+                <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                    <GradientStop Color="Black" Offset="0"/>
+                    <GradientStop Color="#FF83815D" Offset="1"/>
+                </LinearGradientBrush>
+            </ProgressBar.Foreground>
+        </ProgressBar>
+        <StackPanel Margin="34,156,609,43">
+            <Label x:Name="labelReport" Content="Report" RenderTransformOrigin="1.489,-1.19" Height="29" HorizontalAlignment="Center" Margin="62,0,100,0" Foreground="#FF327FDC" Width="353"/>
+            <StackPanel Margin="62,0,76,0">
+                <StackPanel Orientation="Horizontal" Height="59" Margin="0,0,10,0">
+                    <Label FontWeight="Bold" Margin="0,32,0,0" Content="&#x9;Type a Country Name:" Width="192"/>
+                    <TextBox x:Name="TxtSearchCountry" VerticalAlignment="Center" Background="#FFF1E8E8" TextChanged="TxtSearchCountry_TextChanged" Margin="10,32,0,10" HorizontalAlignment="Left" Width="152" Height="17"/>
+                </StackPanel>
+            </StackPanel>
+            <ListBox  x:Name="listBoxCountries" Height="329" SelectionChanged="listBoxCountries_SelectionChanged" Margin="62,0,163,0" HorizontalContentAlignment="Center"/>
         </StackPanel>
-        <StackPanel Margin="460,47,107,10">
-            <TabControl>
-                <TabItem Header="General">
-                    <StackPanel Height="508">
-                        <Border BorderThickness="2" BorderBrush="Black" HorizontalAlignment="Right" Width="202" Margin="0,0,187,0">
-                            <Image x:Name="FlagImage" Height="100" Cursor="None" HorizontalAlignment="Left" Width="199" Margin="0,0,-2,0" />
+        <StackPanel Margin="608,158,0,43" HorizontalAlignment="Left" Width="484">
+            <TabControl Margin="10,0" Height="440">
+                <TabItem Header="Images" Foreground="#FF327FDC">
+                    <StackPanel  Orientation="Vertical">
+                        <Separator Height="60" Background="Transparent"/>
+                        <Border HorizontalAlignment="Center" VerticalAlignment="Center" BorderBrush="Black" BorderThickness="2" Height="100" Width="200">
+                            <Image x:Name="FlagImage"/>
                         </Border>
-                        <Label Content="Name:" FontWeight="Bold"/>
-                        <TextBlock x:Name="TxtBlockName" TextWrapping="Wrap" Text=""/>
-                        <Label Content="Native Name:" FontWeight="Bold"/>
-                        <TextBlock x:Name="TxtBlockNativeName" TextWrapping="Wrap" Text=""/>
-                        <Label Content="Capital:" FontWeight="Bold"/>
-                        <TextBlock x:Name="TxtBlockCapital" TextWrapping="Wrap" Text=""/>
-                        <Label Content="Region:" FontWeight="Bold"/>
-                        <TextBlock x:Name="TxtBlockRegion" TextWrapping="Wrap" Text=""/>
-                        <Label Content="SubRegion:" FontWeight="Bold"/>
-                        <TextBlock x:Name="TxtBlockSubRegion" TextWrapping="Wrap" Text=""/>
-                        <Label Content="Population:" FontWeight="Bold"/>
-                        <TextBlock x:Name="TxtBlockPopulation" TextWrapping="Wrap" Text=""/>
-                        <Label Content="Area:" FontWeight="Bold"/>
-                        <TextBlock x:Name="TxtBlockArea" TextWrapping="Wrap" Text=""/>
-                        <Label Content="Gini Index:" FontWeight="Bold"/>
-                        <TextBlock x:Name="TxtBlockGini" TextWrapping="Wrap" Text=""/>
-                        <Label Content="Languages:" FontWeight="Bold"/>
-                        <ListBox x:Name="ListBoxLanguages" Height="79" BorderBrush="Transparent"/>
+                        <Separator Height="70" Background="Transparent"/>
+                        <Border HorizontalAlignment="Center" VerticalAlignment="Center" Height="168" Margin="70,0" RenderTransformOrigin="0.5,0.5" Width="198">
+                            <Border.RenderTransform>
+                                <TransformGroup>
+                                    <ScaleTransform ScaleX="-1"/>
+                                    <SkewTransform/>
+                                    <RotateTransform/>
+                                    <TranslateTransform/>
+                                </TransformGroup>
+                            </Border.RenderTransform>
+                            <Image x:Name="RegionImage" Margin="0,0,0,10"/>
+                        </Border>
                     </StackPanel>
                 </TabItem>
-                <TabItem Header="Holidays">
-                    <StackPanel Height="508">
+                <TabItem Header="Description" Foreground="#FF327FDC">
+                    <StackPanel>
+                        <TextBlock Name="TxtDescription" TextWrapping="Wrap" ></TextBlock>
+                        <ListBox x:Name="listboxdescription" Height="299"></ListBox>
+                    </StackPanel>
+                </TabItem>
+                <TabItem Header="General" Foreground="#FF327FDC">
+                    <StackPanel Margin="0,0,0,7">
+                        <Label Content="Name" FontWeight="Bold"  HorizontalContentAlignment="Center"/>
+                        <TextBlock x:Name="TxtBlockName" TextWrapping="Wrap" Text="" HorizontalAlignment="Center"/>
+                        <Label Content="Native Name:" FontWeight="Bold" HorizontalContentAlignment="Center"/>
+                        <TextBlock x:Name="TxtBlockNativeName" TextWrapping="Wrap" Text=""  HorizontalAlignment="Center"/>
+                        <Label Content="Capital:" FontWeight="Bold" HorizontalContentAlignment="Center"/>
+                        <TextBlock x:Name="TxtBlockCapital" TextWrapping="Wrap" Text=""  HorizontalAlignment="Center"/>
+                        <Label Content="Region:" FontWeight="Bold" HorizontalContentAlignment="Center"/>
+                        <TextBlock x:Name="TxtBlockRegion" TextWrapping="Wrap" Text=""  HorizontalAlignment="Center"/>
+                        <Label Content="SubRegion:" FontWeight="Bold" HorizontalContentAlignment="Center"/>
+                        <TextBlock x:Name="TxtBlockSubRegion" TextWrapping="Wrap" Text=""  HorizontalAlignment="Center"/>
+                        <Label Content="Population:" FontWeight="Bold" HorizontalContentAlignment="Center"/>
+                        <TextBlock x:Name="TxtBlockPopulation" TextWrapping="Wrap" Text=""  HorizontalAlignment="Center"/>
+                        <Label Content="Area:" FontWeight="Bold" HorizontalContentAlignment="Center"/>
+                        <TextBlock x:Name="TxtBlockArea" TextWrapping="Wrap" Text=""  HorizontalAlignment="Center"/>
+                        <Label Content="Gini Index:" FontWeight="Bold" HorizontalContentAlignment="Center"/>
+                        <TextBlock x:Name="TxtBlockGini" TextWrapping="Wrap" Text=""  HorizontalAlignment="Center"/>
+                        <Label Content="Languages:" FontWeight="Bold" HorizontalContentAlignment="Center"/>
+                        <ListBox x:Name="ListBoxLanguages" Height="51" BorderBrush="Transparent" HorizontalAlignment="Center" Margin="60,0" HorizontalContentAlignment="Center" Width="338"/>
+                    </StackPanel>
+                </TabItem>
+                <TabItem Header="Holidays" Foreground="#FF327FDC">
+                    <StackPanel>
                         <Label x:Name="countHolidays" FontWeight="Bold"/>
-                        <ListBox x:Name="listBoxCountriesHolidays" Height="481" Margin="0,0,300,0" BorderBrush="Transparent"/>
+                        <ListBox x:Name="listBoxCountriesHolidays" Height="404" BorderBrush="Transparent" HorizontalAlignment="Center"/>
                     </StackPanel>
                 </TabItem>
-                <TabItem Header="Info3">
-                    <StackPanel Height="508"/>
+                <TabItem Header="Info3" Foreground="#FF327FDC">
+                    <StackPanel/>
                 </TabItem>
             </TabControl>
         </StackPanel>
+        <DockPanel Height="100" LastChildFill="False" VerticalAlignment="Top" Background="Black">
+            <Image HorizontalAlignment="Left" Height="158" VerticalAlignment="Top" Width="170" Source="AtlasBackround.png" Stretch="UniformToFill" RenderTransformOrigin="0.443,0.493" DockPanel.Dock="Top"/>
+            <Button Content="Button" Height="0" VerticalAlignment="Top" Width="75"/>
+        </DockPanel>
+        <Button Content="" HorizontalAlignment="Left" Margin="1033,25,0,0" VerticalAlignment="Top" Width="59" Height="54" BorderBrush="{x:Null}" Click="Button_Click" RenderTransformOrigin="3.559,1.259">
+            <Button.Background>
+                <ImageBrush ImageSource="images.png" Stretch="UniformToFill"/>
+            </Button.Background>
+        </Button>
+        <Button x:Name="BtnInfo" Content=""  HorizontalAlignment="Left" VerticalAlignment="Top" Width="49" Height="36" Margin="984,34,0,0" BorderBrush="{x:Null}" Click="BtnInfo_Click">
+            <Button.Background>
+                <ImageBrush ImageSource="About.png" Stretch="Uniform" TileMode="Tile"/>
+            </Button.Background>
+        </Button>
+
+
+
+
     </Grid>
 
 </Window>

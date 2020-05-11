@@ -1,244 +1,4 @@
-﻿//namespace Countries
-//{
-//    using Services;
-//    using Models;
-//    using System;
-//    using System.Collections.Generic;
-//    using System.Text;
-//    using System.Threading.Tasks;
-//    using System.Windows;
-//    using System.Windows.Controls;
-//    using System.Windows.Data;
-//    using System.Windows.Documents;
-//    using System.Windows.Input;
-//    using System.Windows.Media;
-//    using System.Windows.Media.Imaging;
-//    using System.Windows.Navigation;
-//    using System.Windows.Shapes;
-//    using System.IO;
-//    using Svg;
-//    using System.Globalization;
-//    using System.Net;
-//    using System.Drawing.Imaging;
-
-//    /// <summary>
-//    /// Interaction logic for MainWindow.xaml
-//    /// </summary>
-//    public partial class MainWindow : Window
-//    {
-//        private List<Country> ListOfCountries;
-//        private readonly ApiService apiService;
-//        private readonly NetworkService networkService;
-//        private readonly DialogService dialogService;
-//        //private readonly DataService dataService;
-
-//        public MainWindow()
-//        {
-//            InitializeComponent();
-//            this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-
-//            networkService = new NetworkService();
-//            apiService = new ApiService();
-//            dialogService = new DialogService();
-//            //dataService = new DataService();
-//            LoadCountries();
-//        }
-
-//        private async void LoadCountries()//Tests Internet Connection
-//        {
-//            bool load;
-
-//            labelReport.Content = "Updating Countries Data...";
-
-//            var connection = networkService.CheckConnection();
-
-//            if (!connection.IsSucess) //If no Internet Connection is Available
-//            {
-//                //LoadLocalCountries();
-//                load = false;
-//            }
-//            else
-//            {
-//                await LoadApiCountries(); //If there is Internet Connection
-//                GetCountriesFlags(ListOfCountries);
-//                load = true;
-//            }
-
-//            if (ListOfCountries.Count == 0)
-//            {
-//                labelReport.Content = "There Is no Internet Connection at the moment" + Environment.NewLine +
-//                   "And there is not a local repository" + Environment.NewLine +
-//                   "Try Again Later!";
-
-//                MessageBox.Show("Before using the App for the first time make sure there is a Internet Connection");
-
-//                return;
-//            }
-
-//            List<Country> listBoxList = ListOfCountries;
-
-//            listBoxCountries.ItemsSource = listBoxList;
-//            //this.listBoxCountries.DataContext = ListOfCountries;
-
-//            if (load)
-//            {
-//                labelReport.Content = string.Format("Data uploaded from the Internet in {0:F} .", DateTime.Now.ToString("dddd, dd MMMM yyyy", new System.Globalization.CultureInfo("en-EN")));
-//            }
-
-//            else
-//            {
-//                labelReport.Content = string.Format("Data uploaded from a local repository.");
-//            }
-
-//            ProgressBarReport.Value = 100;
-
-//        }
-
-//        private async Task LoadApiCountries()
-//        {
-//            ProgressBarReport.Value = 0;
-//            var response = await apiService.GetCountries("http://restcountries.eu", "/rest/v2/all");
-//            ListOfCountries = (List<Country>)response.Result;
-//            ////dataService.DeleteData(); 
-//            //dataService.SaveData(ListOfCountries);
-//        }
-
-//        private void ProgressBarReport_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-//        {
-
-//        }
-
-//        private void listBoxCountries_SelectionChanged(object sender, SelectionChangedEventArgs e)
-//        {
-//            Country selectedCountry = (Country)listBoxCountries.SelectedItem;
-
-//            if (selectedCountry!=null)
-//            {
-//                this.TxtBlockName.Text = selectedCountry.Name;
-//                this.TxtBlockNativeName.Text = selectedCountry.NativeName;
-//                this.TxtBlockCapital.Text = selectedCountry.Capital;
-//                this.TxtBlockRegion.Text = selectedCountry.Region;
-//                this.TxtBlockSubRegion.Text = selectedCountry.Subregion;
-//                this.TxtBlockArea.Text = selectedCountry.Area.ToString() + " Km2";
-//                this.TxtBlockLanguages.Text = selectedCountry.Languages.ToString();
-//                this.TxtBlockPopulation.Text = selectedCountry.Population.ToString("#,#", CultureInfo.InvariantCulture) + " Inhabitants";
-
-//                string flagName = selectedCountry.Flag.Split('/')[4].Split('.')[0];
-
-//                BitmapImage img = new BitmapImage();
-//                img.BeginInit();
-
-//                if (File.Exists(Environment.CurrentDirectory + "/Flags" + $"/{flagName}.jpg"))
-//                {
-//                    img.UriSource = new Uri(Environment.CurrentDirectory + "/Flags" + $"/{flagName}.jpg");
-//                }
-//                else
-//                {
-//                    img.UriSource = new Uri(Environment.CurrentDirectory + "/NoImageAvailable.jpg");
-//                    FlagImage.Stretch = Stretch.None;
-//                }
-
-//                img.EndInit();
-//                FlagImage.Source = img;
-//                FlagImage.Stretch = Stretch.Fill;
-
-//                listBoxCountries.ItemsSource = ListOfCountries;
-
-//            }
-
-//            if(this.TxtBlockCapital.Text == string.Empty)
-//            {
-//                this.TxtBlockCapital.Text = "(Unknown)";
-//            }
-//            if (this.TxtBlockPopulation.Text == string.Empty)
-//            {
-//                this.TxtBlockPopulation.Text = "(Unknown)";
-//            }
-//            if (this.TxtBlockArea.Text == string.Empty)
-//            {
-//                this.TxtBlockArea.Text = "(Unknown)";
-//            }
-//            if (this.TxtBlockSubRegion.Text == string.Empty)
-//            {
-//                this.TxtBlockSubRegion.Text = "(Unknown)";
-//            }
-
-//        }
-
-//        private void TxtSearchCountry_TextChanged(object sender, TextChangedEventArgs e)
-//        {
-//            if (ListOfCountries!=null)
-//            {
-//                var aux = ListOfCountries.FindAll(x => x.Name.ToLower().Contains(TxtSearchCountry.Text.ToLower()));
-
-//                listBoxCountries.ItemsSource = aux;
-
-//                if(aux.Count == 0)
-//                {
-//                    MessageBox.Show("Make sure your typing the country name correctly");
-//                    TxtSearchCountry.Text = string.Empty;
-//                }
-//            }
-
-//        }
-
-//        private void GetCountriesFlags(List<Country> ListOfCountries )
-//        {
-
-//            if(!Directory.Exists("Flags"))
-//            {
-//                Directory.CreateDirectory("Flags");
-//            }
-
-//            foreach(Country country in ListOfCountries)
-//            {
-//                try
-//                {
-//                    string flagName = country.Flag.Split('/')[4].Split('.')[0]; ;
-//                    var path = @"Flags\" + $"{flagName}.svg";
-
-//                    string svgFile = "http://restcountries.eu" + $"/data/{flagName}.svg";
-
-//                    using(WebClient webClient = new WebClient())
-//                    {
-//                        webClient.DownloadFile(svgFile, path);
-//                    }
-
-//                    string flag = flagName;
-//                    var pathFlag = @"Flags\" + $"{flagName}.jpg"; //Save the Image as a jpg file
-
-//                    var svgDoc = SvgDocument.Open(path);
-//                    var bitmap = svgDoc.Draw(100,100);
-
-//                    if (File.Exists(path))
-//                    {
-//                        File.Delete(path);
-//                    }
-
-//                    if (!File.Exists(pathFlag))
-//                    {
-//                        bitmap.Save(pathFlag, ImageFormat.Jpeg);
-//                    }
-
-//                }
-//                catch
-//                {
-//                    continue;
-//                }
-//            }
-//        }
-
-
-//        //private void LoadLocalCountries()
-//        //{
-//        //    ListOfCountries = dataService.GetData(); //Retorna uma Lista
-//        //}
-
-
-
-//    }
-//}
-namespace Countries
+﻿namespace Countries
 {
     using Services;
     using Models;
@@ -261,6 +21,16 @@ namespace Countries
     using System.Net;
     using System.Drawing.Imaging;
     using System.Diagnostics;
+    using System.Drawing;
+    using System.Text.RegularExpressions;
+    using System.Web;
+    using Newtonsoft.Json;
+    using HtmlAgilityPack;
+    using NPOI.POIFS.FileSystem;
+    using System.Xml;
+    using System.Linq;
+    using MySqlX.XDevAPI.Common;
+    using Cambios.Modelos;
 
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -283,8 +53,28 @@ namespace Countries
             dialogService = new DialogService();
             dataService = new DataService();
             LoadCountries();
+
+            //WebClient wc = new WebClient();
+            //string webData = wc.DownloadString("https://en.wikipedia.org/wiki/Portugal");
+            //TxtDescription.Text = StripHTML(webData, true);
         }
 
+        /// <summary>
+        /// Removes HTML labels
+        /// </summary>
+        /// <param name="HTMLText"></param>
+        /// <param name="decode"></param>
+        /// <returns></returns>
+        public static string StripHTML(string HTMLText, bool decode = true)
+        {
+            Regex reg = new Regex("<[^>]+>", RegexOptions.IgnoreCase);
+            var stripped = reg.Replace(HTMLText, "");
+            return decode ? HttpUtility.HtmlDecode(stripped) : stripped;
+        }
+
+        /// <summary>
+        /// Determines if the Program loads information from the API or the DB
+        /// </summary>
         private async void LoadCountries()//Tests Internet Connection
         {
             bool load;
@@ -330,17 +120,21 @@ namespace Countries
 
             if (load)
             {
-                labelReport.Content = string.Format("Data uploaded from the Internet in {0:F} .", DateTime.Now.ToString("dddd, dd MMMM yyyy", new System.Globalization.CultureInfo("en-EN")));
+                labelReport.Content = string.Format("(Data uploaded from the Internet, ({0:F})).", DateTime.Now.ToString("dddd, dd MMMM yyyy", new System.Globalization.CultureInfo("en-EN")));
             }
 
             else
             {
-                labelReport.Content = string.Format("Data uploaded from a local repository.");
+                labelReport.Content = string.Format("(Data uploaded from a local repository({0:F})).", DateTime.Now.ToString("dddd, dd MMMM yyyy", new System.Globalization.CultureInfo("en-EN")));
             }
 
 
         }
 
+        /// <summary>
+        /// Calls restcountires.eu API, deletes the DB, if it exists, and Saves a updated DB
+        /// </summary>
+        /// <returns></returns>
         private async Task LoadApiCountries()
         {
             Progress<ProgressReport> progress = new Progress<ProgressReport>();
@@ -351,12 +145,21 @@ namespace Countries
             //await dataService.SaveDataCountry(ListOfCountries);
             
         }
-
+        /// <summary>
+        /// ProgressBarRepor Value Event
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void ReportProgress(object sender, ProgressReport e)
         {
             ProgressBarReport.Value = e.Percentagem;
         }
 
+        /// <summary>
+        /// Calls holidaysapi
+        /// </summary>
+        /// <param name="c"></param>
+        /// <returns></returns>
         private async Task LoadHoliday(string c) //FAZER COM QUE SO ENTRE AQUI SE HOUVER LIGACAO A NET
         {
             int auxcount = 0;
@@ -387,11 +190,11 @@ namespace Countries
 
         }
 
-        private void ProgressBarReport_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-        {
-
-        }
-
+        /// <summary>
+        /// Updates the Tab Menu with the selected object of type country properties
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private async void listBoxCountries_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             var connection = networkService.CheckConnection();
@@ -399,6 +202,7 @@ namespace Countries
             ListBoxLanguages.ItemsSource = null;
 
             Country selectedCountry = (Country)listBoxCountries.SelectedItem;
+
 
             if (selectedCountry != null)
             {
@@ -418,7 +222,6 @@ namespace Countries
                 this.TxtBlockPopulation.Text = selectedCountry.Population.ToString("#,#", CultureInfo.InvariantCulture) + " Inhabitants";
 
                 string flagName = selectedCountry.Alpha3Code;
-
                 await LoadHoliday(selectedCountry.Alpha2Code);
 
                 try
@@ -430,31 +233,147 @@ namespace Countries
                     {
                         img.UriSource = new Uri(Environment.CurrentDirectory + "/Flags" + $"/{flagName}.jpg");
                     }
-                    else
+                    else if (!File.Exists(Environment.CurrentDirectory + "/Flags" + $"/{flagName}.jpg"))
                     {
-                        img.UriSource = new Uri(Environment.CurrentDirectory + "/ImageNotAvailable.jpg");
-                        FlagImage.Stretch = Stretch.None;
+                        img.UriSource = new Uri(Environment.CurrentDirectory + "/Resources/NoImageAvailable.jpg");
+                        //FlagImage.Stretch = Stretch.None;
                     }
 
                     img.EndInit();
                     FlagImage.Source = img;
                     FlagImage.Stretch = Stretch.Fill;
 
+                    //RegionImage:
+
+                    string Region = selectedCountry.Region.ToString();
+
+                    BitmapImage imgregion = new BitmapImage();
+                    imgregion.BeginInit();
+
+                    if (selectedCountry.Region == "Europe")
+                    {
+                        imgregion.UriSource = new Uri(Environment.CurrentDirectory + "/Regions" + "/europe.png");
+                    }
+                    if (selectedCountry.Region == "Americas")
+                    {
+                        imgregion.UriSource = new Uri(Environment.CurrentDirectory + "/Regions" + "/americas.png");
+                    }
+                    if (selectedCountry.Region == "Oceania")
+                    {
+                        imgregion.UriSource = new Uri(Environment.CurrentDirectory + "/Regions" + "/oceania.png");
+                    }
+                    if (selectedCountry.Region == "Africa")
+                    {
+                        imgregion.UriSource = new Uri(Environment.CurrentDirectory + "/Regions" + "/africa.png");
+                    }
+                    if (selectedCountry.Region == "Polar")
+                    {
+                        imgregion.UriSource = new Uri(Environment.CurrentDirectory + "/Regions" + "/antarctida.png");
+                    }
+                    if (selectedCountry.Region == "Asia")
+                    {
+                        imgregion.UriSource = new Uri(Environment.CurrentDirectory + "/Regions" + "/asia.png");
+                    }
+
+                    imgregion.EndInit();
+                    RegionImage.Source = imgregion;
+
+
+                    ////Wikiepedia API 
+
+                    //WebClient client = new WebClient();
+                    //var a = client.DownloadString("https://en.wikipedia.org/w/api.php?action=opensearch&search=" + $"{selectedCountry.Name}");
+                    //var b = JsonConvert.DeserializeObject(a);
+                    //string[] c = b.ToString().Split('[');
+                    //var i = c[3];
+                    //TxtDescription.Text = i.ToString();
+
+                    //string url = "http://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&explaintext=1&titles=stack%20overflow";
+                    //WebClient wc = new WebClient();
+                    //wc.Encoding = Encoding.UTF8;
+                    //string html = wc.DownloadString(url);
+                    //HtmlDocument doc = new HtmlDocument();
+                    //doc.LoadHtml(html);
+
+                    //List<string> lista = new List<string>();
+
+                    //foreach (HtmlNode node in doc.DocumentNode.Descendants("p"))
+                    //{
+                    //    lista.Add(node.InnerText);
+                    //}
+
+                    //TxtDescription.Text = node.
+                    //listboxdescription.ItemsSource = lista;
+
+                    //WebClient client = new WebClient();
+
+                    //using (Stream stream = client.OpenRead("http://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&explaintext=1&titles=stack%20overflow"))
+                    //using (StreamReader reader = new StreamReader(stream))
+                    //{
+                    //    JsonSerializer ser = new JsonSerializer();
+                    //    Result result = ser.Deserialize<Result>(new JsonTextReader(reader));
+
+                    //    foreach (Page page in result.query.pages.Values)
+                    //        Console.WriteLine(page.extract);
+
+                    //}
+
+                    //string[] stringArray = new string[10000];
+                    //string url = "https://en.wikipedia.org/w/api.php?format=xml&action=query&prop=extract&titles=" + $"{selectedCountry.Name}" + "&redirects=true";
+                    //WebClient wc = new WebClient();
+                    //wc.Encoding = Encoding.UTF8;
+                    //string html = wc.DownloadString(url);
+                    //HtmlDocument doc = new HtmlDocument();
+                    //doc.LoadHtml(html);
+                    //foreach (HtmlNode node in doc.DocumentNode.Descendants("p"))
+                    //{
+                    //    TxtDescription.Text += node.InnerText;
+                    //}
+
+                    //var webclient = new WebClient();
+                    //var pageSourceCode = webclient.DownloadString("https://en.wikipedia.org/w/api.php?format=xml&action=query&prop=extract&titles=" + $"{selectedCountry.Name}" + "&redirects=true");
+                    //XmlDocument doc = new XmlDocument();
+                    //doc.LoadXml(pageSourceCode);
+
+                    //var node = doc.GetElementsByTagName("extract")[0];
+
+                    //try
+                    //{
+                    //    string ss = node.InnerText;
+                    //    Regex regex = new Regex("\\<[^\\>]*\\>");
+                    //    string.Format("Before:{0}", ss);
+                    //    ss = regex.Replace(ss, string.Empty);
+                    //    string result = String.Format(ss);
+                    //    TxtDescription.Text += result;
+                    //}
+                    //catch
+                    //{
+                    //    TxtDescription.Text = "Error";
+                    //}
+
+                    //}
+                    //catch
+                    //{
+
+                    //}
+
+
+                    listBoxCountries.ItemsSource = ListOfCountries;
+
                 }
                 catch
                 {
 
                 }
-                
-
-                listBoxCountries.ItemsSource = ListOfCountries;
-
-            }
 
             CheckData();
 
+            }
         }
 
+        /// <summary>
+        /// Display Info Conventions
+        /// </summary>
         private void CheckData()
         {
             if (this.TxtBlockCapital.Text == string.Empty)
@@ -483,6 +402,11 @@ namespace Countries
             }
         }
 
+        /// <summary>
+        /// Countries 'Search Engine'
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void TxtSearchCountry_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (ListOfCountries != null)
@@ -500,6 +424,10 @@ namespace Countries
 
         }
 
+        /// <summary>
+        /// Creates a folder for countries flags images
+        /// </summary>
+        /// <param name="ListOfCountries"></param>
         private void GetCountriesFlags(List<Country> ListOfCountries)
         {
             if (!Directory.Exists("Flags"))
@@ -546,14 +474,41 @@ namespace Countries
             }
         }
 
+        /// <summary>
+        /// Access DB in case there is no Internet Connection
+        /// </summary>
+        /// <param name="c"></param>
+        /// <returns></returns>
         private void LoadLocalCountries()
         {
-            ListOfCountries = dataService.GetLocalDataCountry(); //Returns a Local Repository containing The various API's Data
+            /*ListOfCountries = dataService.GetLocalDataCountry();*/ //Returns a Local Repository containing The various API's Data
             //dataService.DeleteData();
-            var stopwatch = Stopwatch.StartNew();
-            stopwatch.Stop();
-            var elapsped = stopwatch.Elapsed;
-            MessageBox.Show(elapsped.ToString());
+            //var stopwatch = Stopwatch.StartNew();
+            //stopwatch.Stop();
+            //var elapsped = stopwatch.Elapsed;
+            //MessageBox.Show(elapsped.ToString());
+        }
+
+        /// <summary>
+        /// Exit Program
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            Environment.Exit(0);
+        }
+
+        /// <summary>
+        /// Opens Credits
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void BtnInfo_Click(object sender, RoutedEventArgs e)
+        {
+            this.Hide();
+            About form = new About();
+            form.Show();
         }
 
     }

@@ -30,14 +30,14 @@
 
             if (!Directory.Exists("Data"))
             {
-                Directory.CreateDirectory("Data"); //Se a pasta não existir, é criada
+                Directory.CreateDirectory("Data"); //If exists the Folder is created
             }
 
             var path = @"Data\Countries.sqlite";
 
             try
             {
-                connection = new SQLiteConnection("DataSource=" + path); //Caminho para fazer a conexação À Base de Dados
+                connection = new SQLiteConnection("DataSource=" + path); //Path to Data Base
                 connection.Open();
 
                 //Country
@@ -80,13 +80,13 @@
 
                 sqlCommand = "Create table if not exists CountryHoliday " +
                     "(Alpha3Code char(3), " +
-                    "Code char(3),";
+                    "Code char(3))";
 
                 //Holiday
                 sqlCommand = "Create table if not exists Holidays " +
                     "(Code char(3)," +
                     "name string," +
-                    "date string,)";
+                    "date string)";
 
                 commandCountry = new SQLiteCommand(sqlCommand, connection);
                 commandCountry.ExecuteNonQuery();
@@ -235,7 +235,7 @@
             catch (Exception e)
 
             {
-                dialogService.ShowMessage("Unable to Read ", e.Message);
+                dialogService.ShowMessage("Unable to Read", e.Message);
                 return null;
             }
         }
