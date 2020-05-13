@@ -1,13 +1,16 @@
 ﻿namespace Countries.Services
 {
     using Countries.Models;
+    using ImageMagick;
     using System;
     using System.Collections.Generic;
     using System.Data.SQLite;
     using System.Globalization;
     using System.IO;
+    using System.Net;
     using System.Threading;
     using System.Threading.Tasks;
+    using System.Windows;
 
     public class DataService
     {
@@ -17,7 +20,7 @@
 
         private DialogService dialogService;
 
-        public DataService() //Construtor que verifica que se existe a pasta com a Base de Dados
+        public DataService() 
         {
             dialogService = new DialogService();
 
@@ -30,14 +33,14 @@
 
             if (!Directory.Exists("Data"))
             {
-                Directory.CreateDirectory("Data"); //If exists the Folder is created
+                Directory.CreateDirectory("Data");
             }
 
             var path = @"Data\Countries.sqlite";
 
             try
             {
-                connection = new SQLiteConnection("DataSource=" + path); //Path to Data Base
+                connection = new SQLiteConnection("DataSource=" + path);
                 connection.Open();
 
                 //Country
@@ -57,10 +60,10 @@
 
                 //CountryLanguage
                 sqlCommand = "create table if not exists CountryLanguage(" +
-               "Iso639_2 char(3)," +
+               "CodLanguage char(3)," +
                "Alpha3Code char(3)," +
-               "PRIMARY KEY (Alpha3Code, Iso639_2)," +
-               "FOREIGN KEY(Iso639_2) REFERENCES Language(Iso639_2)," +
+               "PRIMARY KEY (Alpha3Code, CodLanguage)," +
+               "FOREIGN KEY(CodLanguage) REFERENCES Language(Iso639_2)," +
                "FOREIGN KEY (Alpha3Code) REFERENCES Country(Alpha3Code))";
 
                 commandCountry = new SQLiteCommand(sqlCommand, connection);
@@ -68,7 +71,7 @@
                 
                 //Language
                 sqlCommand = "Create table if not exists Languages " +
-                    "(Iso639_1 char(2)," +
+                    "(Iso639_1 char(3)," +
                     "Iso639_2 char(3) PRIMARY KEY," + 
                     "Name Varchar(100)," +
                     "NativeName Varchar(100))";
@@ -76,21 +79,20 @@
                 commandCountry = new SQLiteCommand(sqlCommand, connection);
                 commandCountry.ExecuteNonQuery();
 
-                //CountryHoliday
-                sqlCommand = "Create table if not exists CountryHoliday " +
-                    "(Alpha3Code char(3), " +
-                    "Code char(3))" +
-                    "FOREIGN KEY(Code) REFERENCES Holiday(Code)," +
-                    "FOREIGN KEY(Alpha3Code) REFERENCES Country(Alpha3Code),";
+                //Holiday
+                sqlCommand = "Create table if not exists Holidays " +
+                    "(Name varchar(100)," +
+                    "date varchar(100))";
 
                 commandCountry = new SQLiteCommand(sqlCommand, connection);
                 commandCountry.ExecuteNonQuery();
 
-                //Holiday
-                sqlCommand = "Create table if not exists Holidays " +
-                    "(Code char(3)," +
-                    "name varchar(100)," +
-                    "date varchar(100)";
+                //CountryHoliday
+                sqlCommand = "Create table if not exists CountryHoliday " +
+                    "(Alpha3Code char(3), " +
+                    "Name varchar(100)," +
+                    "FOREIGN KEY(Alpha3Code) REFERENCES Country(Alpha3Code)," +
+                    "FOREIGN KEY(Name) REFERENCES Holidays(Name))";
 
                 commandCountry = new SQLiteCommand(sqlCommand, connection);
                 commandCountry.ExecuteNonQuery();
@@ -109,19 +111,17 @@
                 sqlCommand = "Create table if not exists CountryCurrency " +
                    "(Alpha3Code char(3)," +
                    "CurrencyCode char(3)," +
-                   "RateCode char(3)," +
                    "FOREIGN KEY(Alpha3Code) REFERENCES Country(Alpha3Code)," +
-                   "FOREIGN KEY(CurrencyCode) REFERENCES Currency(Code)," +
-                   "FOREIGN KEY(RatesCode) REFERENCES Rates(Code),";
+                   "FOREIGN KEY(CurrencyCode) REFERENCES Currency(Code))";
 
                 commandCountry = new SQLiteCommand(sqlCommand, connection);
                 commandCountry.ExecuteNonQuery();
 
                 //Rate
                 sqlCommand = "Create table if not exists Rates " +
-                  "(RateId Int UNIQUE PRIMARY KEY" +
-                  "Code char(3)," +
-                  "double TaxRate," +
+                  "(RateId Int," +
+                  "Code varchar(3)," +
+                  "TaxRate double," +
                   "Name Varchar(100))";
 
                 commandCountry = new SQLiteCommand(sqlCommand, connection);
@@ -134,8 +134,10 @@
             }
 
         }
+
         public async Task SaveDataCountry(List<Country> Countries)
         {
+            
             try
             {
                 List<string> ListOfLanguages = new List<string>();
@@ -152,6 +154,10 @@
 
                     foreach(var language in c.Languages)
                     {
+                        string sql3 = string.Format("insert into CountryLanguage(CodLanguage,Alpha3Code) values ('{0}', '{1}')", language.Iso639_2, c.Alpha3Code);
+                        commandCountry = new SQLiteCommand(sql3, connection);
+                        await Task.Run(() => commandCountry.ExecuteNonQuery());
+
                         if (!ListOfLanguages.Contains(language.Iso639_2))
                         {
                             CheckSaveDataCountryLanguage(language);
@@ -160,42 +166,82 @@
                             commandCountry = new SQLiteCommand(sql2, connection);
                             await Task.Run(() => commandCountry.ExecuteNonQuery());
 
-                            string sql3 = string.Format("insert into CountryLanguage(Iso639_2,Alpha3Code) values ('{0}', '{1}')", language.Iso639_2, c.Alpha3Code);
-                            commandCountry = new SQLiteCommand(sql3, connection);
-                            await Task.Run(() => commandCountry.ExecuteNonQuery());
-
                             ListOfLanguages.Add(language.Iso639_2);
                         }
                     }
 
-                    //foreach (var Currency in c.Currencies)
-                    //{
-                    //    if (!ListOfCurrencies.Contains(Currency.Code))
-                    //    {
-                    //        CheckSaveDataCountryLanguage(Currency);
+                    foreach (var currency in c.Currencies)
+                    {
+                        string sql5 = string.Format("insert into CountryCurrency(Alpha3Code, CurrencyCode) values ('{0}', '{1}')", c.Alpha3Code, currency.Code);
+                        commandCountry = new SQLiteCommand(sql5, connection);
+                        await Task.Run(() => commandCountry.ExecuteNonQuery());
 
-                    //        string sql4 = string.Format("insert into Languages(Iso639_1,Iso639_2,Name,NativeName) values ('{0}', '{1}', '{2}', '{3}')", language.Iso639_1, language.Iso639_2, language.Name, language.NativeName);
-                    //        commandCountry = new SQLiteCommand(sql2, connection);
-                    //        await Task.Run(() => commandCountry.ExecuteNonQuery());
+                        if (!ListOfCurrencies.Contains(currency.Code))
+                        {
+                            //CheckSaveDataCountryCurrency(currency);
 
-                    //        string sql5 = string.Format("insert into CountryLanguage(Iso639_2,Alpha3Code) values ('{0}', '{1}')", language.Iso639_2, c.Alpha3Code);
-                    //        commandCountry = new SQLiteCommand(sql3, connection);
-                    //        await Task.Run(() => commandCountry.ExecuteNonQuery());
+                            string sql4 = string.Format("insert into Currency(Code,CurrencyName,Symbol) values ('{0}', '{1}', '{2}')", currency.Code, currency.CurrencyName, currency.Symbol);
+                            commandCountry = new SQLiteCommand(sql4, connection);
+                            await Task.Run(() => commandCountry.ExecuteNonQuery());
 
-                    //        ListOfLanguages.Add(language.Iso639_2);
-                    //    }
-                    //}
-
+                            ListOfCurrencies.Add(currency.Code);
+                        }
+                    }
                 }
 
-                connection.Close();
-                
             }
             catch (Exception e)
             {
                 dialogService.ShowMessage("Unable to Save Countries Data", e.Message);
             }
+
         }
+
+        public async Task SaveDataRates(List<Rates> Rates)
+        {
+            try
+            {
+                foreach (var rate in Rates)
+                {
+                    string sql = string.Format("insert into Rates (RateId,Code,TaxRate,Name) values('{0}', '{1}', '{2}', '{3}')", rate.RateId, rate.Code, rate.TaxRate, rate.Name);
+                    commandCountry = new SQLiteCommand(sql, connection);
+                    await Task.Run(() => commandCountry.ExecuteNonQuery());
+                }
+
+                connection.Close();
+            }
+            catch (Exception e)
+            {
+                dialogService.ShowMessage("Unable to Save Rates Data", e.Message);
+            }
+
+        }
+
+        //public async Task SaveDataHolidays(List<CountryHoliday> Holidays)
+        //{
+        //    try
+        //    {
+        //        foreach (var holiday in Holidays)
+        //        {
+        //            string sql6 = string.Format("insert into Holiday (Name, date) values ('{0}', '{1}')", holiday.name, holiday.date);
+        //            commandCountry = new SQLiteCommand(sql6, connection);
+        //            await Task.Run(() => commandCountry.ExecuteNonQuery());
+
+        //            string sql7 = string.Format("insert into CountryHoliday(Alpha3Code, Name) values ('{0}', '{1}')", c.Alpha3Code, holiday.name);
+        //            commandCountry = new SQLiteCommand(sql7, connection);
+        //            await Task.Run(() => commandCountry.ExecuteNonQuery());
+        //        }
+
+        //        connection.Close();
+
+        //    }
+        //    catch (Exception e)
+        //    {
+        //        dialogService.ShowMessage("Unable to Save Holdays Data", e.Message);
+        //    }
+           
+        //}
+
         private void CheckSaveDataCountryLanguage(Language language)
         {
             if (language.Name.Contains("'"))
@@ -207,6 +253,7 @@
                 language.NativeName = language.NativeName.Replace("'", " ");
             }
         }
+
         private void CheckSaveDataCountry(Country c)
         {
             if (c.Name.Contains("'"))
@@ -239,7 +286,8 @@
             }
 
         }
-        public List<Country> GetLocalDataCountry(IProgress<ProgressReport> progress)
+
+        public List<Country> GetLocalDataCountry()
         {
             List<Country> Countries = new List<Country>();
 
@@ -263,6 +311,7 @@
                         Gini = (double)readerCountries["Gini"],
                         Population = (int)readerCountries["Population"],
                         Languages = new List<Language>(),
+                        Currencies = new List<Currency>()
                     });
                 }
 
@@ -270,32 +319,213 @@
 
                 foreach(Country c in Countries)
                 {
-                    string sqlLanguages = $"SELECT Iso639_1,Iso639_2,LanguageName,LanguageNativeName FROM Languages INNER JOIN CountryLanguage ON Languages.Iso639_2=CountryLanguage.Iso639_2 WHERE Alpha3Code={c.Alpha3Code}";
-                    SQLiteDataReader readerLanguages = commandCountry.ExecuteReader(); 
+                    //string sqlLanguages = $"SELECT Iso639_1,Iso639_2,Name,NativeName FROM Languages INNER JOIN CountryLanguage ON Languages.Iso639_2=CountryLanguage.CodLanguage WHERE Alpha3Code='AFG'"; //{c.Alpha3Code}
+
+                    commandCountry.Parameters.AddWithValue("@alpha3Code", c.Alpha3Code);
+                    commandCountry.CommandText = "SELECT Iso639_1, Iso639_2, Name, NativeName FROM Languages INNER JOIN CountryLanguage ON Languages.Iso639_2 = CountryLanguage.CodLanguage WHERE Alpha3Code =@alpha3Code";
+                    commandCountry.Connection = connection;
+
+                    SQLiteDataReader readerLanguages = commandCountry.ExecuteReader();
+                    //MessageBox.Show(readerLanguages.FieldCount.ToString());
 
                     while (readerLanguages.Read())
-                    {
-                        c.Languages.Add(new Language
                         {
-                            Iso639_1 = (string)readerLanguages["Iso639_1"],
-                            Iso639_2 = (string)readerLanguages["Iso639_2"],
-                            Name = (string)readerLanguages["Name"],
-                            NativeName = (string)readerLanguages["NativeName"],
+                            c.Languages.Add(new Language
+                            {
+                                Iso639_1 = (string)readerLanguages["Iso639_1"],
+                                Iso639_2 = (string)readerLanguages["Iso639_2"],
+                                Name = (string)readerLanguages["Name"],
+                                NativeName = (string)readerLanguages["NativeName"],
+                            });
+                        }
+
+                        
+                        readerLanguages.Close();
+                    
+
+                    //while (readerLanguages.Read())
+                    //{
+                    //    int aux = 0;
+
+                    //    c.Languages.Add(new Language
+                    //    {
+                    //        Iso639_1 = (string)readerLanguages["Iso639_1"],
+                    //        Iso639_2 = (string)readerLanguages["Iso639_2"],
+                    //        Name = (string)readerLanguages["Name"],
+                    //        NativeName = (string)readerLanguages["NativeName"]
+                    //    });
+
+                    //    aux++;
+                    //    MessageBox.Show($"{aux}");
+                    //}
+
+
+                    readerLanguages.Close();
+
+                    commandCountry.Parameters.AddWithValue("@alpha3Code", c.Alpha3Code);
+                    commandCountry.CommandText = "SELECT Code,CurrencyName,Symbol FROM Currency INNER JOIN CountryCurrency ON Currency.Code=CountryCurrency.CurrencyCode WHERE Alpha3Code=@alpha3code";
+                    commandCountry.Connection = connection;
+
+                    SQLiteDataReader readerCurrencies= commandCountry.ExecuteReader();
+                    //MessageBox.Show(readerCurrencies.FieldCount.ToString());
+
+                    while (readerCurrencies.Read())
+                    {
+                        c.Currencies.Add(new Currency
+                        {
+                            Code = (string)readerCurrencies["Code"],
+                            CurrencyName = (string)readerCurrencies["CurrencyName"],
+                            Symbol = (string)readerCurrencies["Symbol"]
                         });
                     }
+
+                    readerCurrencies.Close();
+
+                    //string sqlCurrencies = $"SELECT Code,CurrencyName,Symbol FROM Currency INNER JOIN CountryCurrency ON Currency.Code=CountryCurrency.CurrencyCode WHERE Alpha3Code='{c.Alpha3Code}'";
+                    //SQLiteDataReader readerCurrencies = commandCountry.ExecuteReader();
+
+                    //while (readerCurrencies.Read())
+                    //{
+                    //    c.Currencies.Add(new Currency
+                    //    {
+                    //        Code = (string)readerCurrencies["Code"],
+                    //        CurrencyName = (string)readerCurrencies["CurrencyName"],
+                    //        Symbol = (string)readerCurrencies["Symbol"]
+                    //    });
+                    //}
+
+                    //readerCurrencies.Close();
                 }
-               
-                connection.Close();
+
                 return Countries;
+
+            }
+            catch (Exception e)
+            {
+                dialogService.ShowMessage("Unable to Read Data Base", e.Message);
+                return null;
+            }
+        }
+
+        public List<Rates> GetLocalDataRates()
+        {
+            List<Rates> Rates = new List<Rates>();
+
+            try
+            {
+                string sql = "select RateId, Code, TaxRate, Name from Rates";
+                commandCountry = new SQLiteCommand(sql, connection);
+                SQLiteDataReader reader = commandCountry.ExecuteReader(); //Lê cada registo
+                while (reader.Read())
+                {
+                    Rates.Add(new Rates
+                    {
+                        RateId = (int)reader["RateId"],
+                        Code = (string)reader["Code"],
+                        Name = (string)reader["Name"],
+                        TaxRate = (double)reader["TaxRate"],
+                    });
+                }
+
+                connection.Close();
+                return Rates;
 
             }
             catch (Exception e)
 
             {
-                dialogService.ShowMessage("Unable to Read", e.Message);
+                dialogService.ShowMessage("Erro", e.Message);
                 return null;
             }
         }
 
+        public void DeleteData()
+        {
+            try
+            {
+                string sql1 = "delete from Countries";
+                commandCountry = new SQLiteCommand(sql1, connection);
+                commandCountry.ExecuteNonQuery();
+
+                string sql2 = "delete from CountryLanguage";
+                commandCountry = new SQLiteCommand(sql2, connection);
+                commandCountry.ExecuteNonQuery();
+
+                string sql3 = "delete from Languages";
+                commandCountry = new SQLiteCommand(sql3, connection);
+                commandCountry.ExecuteNonQuery();
+
+                string sql4 = "delete from CountryHoliday";
+                commandCountry = new SQLiteCommand(sql4, connection);
+                commandCountry.ExecuteNonQuery();
+
+                string sql5 = "delete from Holidays";
+                commandCountry = new SQLiteCommand(sql5, connection);
+                commandCountry.ExecuteNonQuery();
+
+                string sql6 = "delete from Holidays";
+                commandCountry = new SQLiteCommand(sql6, connection);
+                commandCountry.ExecuteNonQuery();
+
+                string sql7 = "delete from Currency";
+                commandCountry = new SQLiteCommand(sql7, connection);
+                commandCountry.ExecuteNonQuery();
+
+                string sql8 = "delete from CountryCurrency";
+                commandCountry = new SQLiteCommand(sql8, connection);
+                commandCountry.ExecuteNonQuery();
+
+                string sql9 = "delete from Rates";
+                commandCountry = new SQLiteCommand(sql9, connection);
+                commandCountry.ExecuteNonQuery();
+            }
+            catch (Exception e)
+            {
+                dialogService.ShowMessage("Unable to delete Local Repository", e.Message);
+            }
+
+        }
+
+        public void SaveFlag(string url, string filename)
+        {
+            if (!Directory.Exists("Images"))
+            {   
+                Directory.CreateDirectory("Images");
+            }
+
+            try
+            {
+                using (WebClient webClient = new WebClient())
+                {
+                    webClient.DownloadFile(url, @"Images\" + filename + ".svg");
+
+                }
+            }
+
+            catch (Exception e)
+            {
+                dialogService.ShowMessage("Error While Creating SVG Images Folder", e.Message);
+            }
+
+
+            if (!Directory.Exists("ImagesPNG"))
+            {
+                Directory.CreateDirectory("ImagesPNG");
+            }
+
+            try
+            {
+                using (MagickImage image = new MagickImage(@"Images\" + filename + ".svg"))
+                {
+
+                    image.Write(@"ImagesPNG\" + filename + ".png");
+                }
+            }
+
+            catch (Exception e)
+            {
+                dialogService.ShowMessage("Error While Creating PNG Images Folder", e.Message);
+            }
+        }
     }
 }
