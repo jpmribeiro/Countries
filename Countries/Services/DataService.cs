@@ -7,6 +7,7 @@
     using System.Data.SQLite;
     using System.Globalization;
     using System.IO;
+    using System.Linq;
     using System.Net;
     using System.Threading;
     using System.Threading.Tasks;
@@ -20,6 +21,10 @@
 
         private DialogService dialogService;
 
+
+        /// <summary>
+        /// Creates the DB Tables
+        /// </summary>
         public DataService() 
         {
             dialogService = new DialogService();
@@ -135,13 +140,19 @@
 
         }
 
-        public async Task SaveDataCountry(List<Country> Countries)
+
+        /// <summary>
+        /// Saves the information from countries API in the DB
+        /// </summary>
+        /// <param name="Countries"></param>
+        /// <returns></returns>
+        public async Task SaveDataCountry(List<Country> Countries, IProgress<ProgressReport> progress)
         {
-            
+            ProgressReport report = new ProgressReport();
+
             try
             {
                 List<string> ListOfLanguages = new List<string>();
-
                 List<string> ListOfCurrencies = new List<string>();
 
                 foreach (var c in Countries) 
@@ -183,10 +194,15 @@
                             string sql4 = string.Format("insert into Currency(Code,CurrencyName,Symbol) values ('{0}', '{1}', '{2}')", currency.Code, currency.CurrencyName, currency.Symbol);
                             commandCountry = new SQLiteCommand(sql4, connection);
                             await Task.Run(() => commandCountry.ExecuteNonQuery());
-
                             ListOfCurrencies.Add(currency.Code);
                         }
+
                     }
+
+                    report.SaveCountries.Add(c);
+                    report.Percentagem = (report.SaveCountries.Count * 100) / Countries.Count;
+                    progress.Report(report);
+
                 }
 
             }
@@ -197,8 +213,16 @@
 
         }
 
-        public async Task SaveDataRates(List<Rates> Rates)
+
+        /// <summary>
+        /// Saves the information from rates API in the DB
+        /// </summary>
+        /// <param name="Rates"></param>
+        /// <returns></returns>
+        public async Task SaveDataRates(List<Rates> Rates, IProgress<ProgressReport> progress)
         {
+            ProgressReport report3 = new ProgressReport();
+
             try
             {
                 foreach (var rate in Rates)
@@ -206,6 +230,9 @@
                     string sql = string.Format("insert into Rates (RateId,Code,TaxRate,Name) values('{0}', '{1}', '{2}', '{3}')", rate.RateId, rate.Code, rate.TaxRate, rate.Name);
                     commandCountry = new SQLiteCommand(sql, connection);
                     await Task.Run(() => commandCountry.ExecuteNonQuery());
+                    report3.SaveRates.Add(rate);
+                    report3.Percentagem = (report3.SaveCountries.Count * 100) / Rates.Count;
+                    progress.Report(report3);
                 }
 
                 connection.Close();
@@ -216,6 +243,7 @@
             }
 
         }
+
 
         //public async Task SaveDataHolidays(List<CountryHoliday> Holidays)
         //{
@@ -242,6 +270,11 @@
            
         //}
 
+
+        /// <summary>
+        /// Checks info before saving data in the Languages Table
+        /// </summary>
+        /// <param name="language"></param>
         private void CheckSaveDataCountryLanguage(Language language)
         {
             if (language.Name.Contains("'"))
@@ -254,6 +287,11 @@
             }
         }
 
+
+        /// <summary>
+        /// Filters info before saving data in the Countries Table 
+        /// </summary>
+        /// <param name="c"></param>
         private void CheckSaveDataCountry(Country c)
         {
             if (c.Name.Contains("'"))
@@ -287,7 +325,12 @@
 
         }
 
-        public List<Country> GetLocalDataCountry()
+
+        /// <summary>
+        /// Grts Table Country from DB
+        /// </summary>
+        /// <returns></returns>
+        public async Task<List<Country>> GetLocalDataCountry()
         {
             List<Country> Countries = new List<Country>();
 
@@ -297,23 +340,26 @@
                 commandCountry = new SQLiteCommand(sqlCountries, connection);
                 SQLiteDataReader readerCountries = commandCountry.ExecuteReader(); //Lê cada registo
 
-                while (readerCountries.Read())
+                await Task.Run(() =>
                 {
-                    Countries.Add(new Country
+                    while (readerCountries.Read())
                     {
-                        Name = (string)readerCountries["Name"],
-                        NativeName = (string)readerCountries["Native_Name"],
-                        Alpha3Code = (string)readerCountries["Alpha3Code"],
-                        Capital = (string)readerCountries["Capital"],
-                        Region = (string)readerCountries["Region"],
-                        Subregion = (string)readerCountries["Subregion"],
-                        Area = (double)readerCountries["Area"],
-                        Gini = (double)readerCountries["Gini"],
-                        Population = (int)readerCountries["Population"],
-                        Languages = new List<Language>(),
-                        Currencies = new List<Currency>()
-                    });
-                }
+                        Countries.Add(new Country
+                        {
+                            Name = (string)readerCountries["Name"],
+                            NativeName = (string)readerCountries["Native_Name"],
+                            Alpha3Code = (string)readerCountries["Alpha3Code"],
+                            Capital = (string)readerCountries["Capital"],
+                            Region = (string)readerCountries["Region"],
+                            Subregion = (string)readerCountries["Subregion"],
+                            Area = (double)readerCountries["Area"],
+                            Gini = (double)readerCountries["Gini"],
+                            Population = (int)readerCountries["Population"],
+                            Languages = new List<Language>(),
+                            Currencies = new List<Currency>()
+                        });
+                    }
+                });
 
                 readerCountries.Close();
 
@@ -328,7 +374,9 @@
                     SQLiteDataReader readerLanguages = commandCountry.ExecuteReader();
                     //MessageBox.Show(readerLanguages.FieldCount.ToString());
 
-                    while (readerLanguages.Read())
+                    await Task.Run(() =>
+                    {
+                        while (readerLanguages.Read())
                         {
                             c.Languages.Add(new Language
                             {
@@ -338,9 +386,9 @@
                                 NativeName = (string)readerLanguages["NativeName"],
                             });
                         }
+                    });
 
-                        
-                        readerLanguages.Close();
+                    readerLanguages.Close();
                     
 
                     //while (readerLanguages.Read())
@@ -359,8 +407,7 @@
                     //    MessageBox.Show($"{aux}");
                     //}
 
-
-                    readerLanguages.Close();
+                    //readerLanguages.Close();
 
                     commandCountry.Parameters.AddWithValue("@alpha3Code", c.Alpha3Code);
                     commandCountry.CommandText = "SELECT Code,CurrencyName,Symbol FROM Currency INNER JOIN CountryCurrency ON Currency.Code=CountryCurrency.CurrencyCode WHERE Alpha3Code=@alpha3code";
@@ -369,15 +416,18 @@
                     SQLiteDataReader readerCurrencies= commandCountry.ExecuteReader();
                     //MessageBox.Show(readerCurrencies.FieldCount.ToString());
 
-                    while (readerCurrencies.Read())
+                    await Task.Run(() =>
                     {
-                        c.Currencies.Add(new Currency
+                        while (readerCurrencies.Read())
                         {
-                            Code = (string)readerCurrencies["Code"],
-                            CurrencyName = (string)readerCurrencies["CurrencyName"],
-                            Symbol = (string)readerCurrencies["Symbol"]
-                        });
-                    }
+                            c.Currencies.Add(new Currency
+                            {
+                                Code = (string)readerCurrencies["Code"],
+                                CurrencyName = (string)readerCurrencies["CurrencyName"],
+                                Symbol = (string)readerCurrencies["Symbol"]
+                            });
+                        }
+                    });
 
                     readerCurrencies.Close();
 
@@ -407,8 +457,13 @@
             }
         }
 
-        public List<Rates> GetLocalDataRates()
-        {
+
+        /// <summary>
+        /// Gets Rates Table from DB
+        /// </summary>
+        /// <returns></returns>
+        public async Task<List<Rates>>GetLocalDataRates()
+        { 
             List<Rates> Rates = new List<Rates>();
 
             try
@@ -416,6 +471,7 @@
                 string sql = "select RateId, Code, TaxRate, Name from Rates";
                 commandCountry = new SQLiteCommand(sql, connection);
                 SQLiteDataReader reader = commandCountry.ExecuteReader(); //Lê cada registo
+                
                 while (reader.Read())
                 {
                     Rates.Add(new Rates
@@ -439,93 +495,102 @@
             }
         }
 
-        public void DeleteData()
+
+        /// <summary>
+        /// Drops every Table in the DB
+        /// </summary>
+        public async Task DeleteData()
         {
-            try
+            await Task.Run(() =>
             {
-                string sql1 = "delete from Countries";
-                commandCountry = new SQLiteCommand(sql1, connection);
-                commandCountry.ExecuteNonQuery();
+                try
+                {
+                    string sql1 = "delete from Countries";
+                    commandCountry = new SQLiteCommand(sql1, connection);
+                    commandCountry.ExecuteNonQuery();
 
-                string sql2 = "delete from CountryLanguage";
-                commandCountry = new SQLiteCommand(sql2, connection);
-                commandCountry.ExecuteNonQuery();
+                    string sql2 = "delete from CountryLanguage";
+                    commandCountry = new SQLiteCommand(sql2, connection);
+                    commandCountry.ExecuteNonQuery();
 
-                string sql3 = "delete from Languages";
-                commandCountry = new SQLiteCommand(sql3, connection);
-                commandCountry.ExecuteNonQuery();
+                    string sql3 = "delete from Languages";
+                    commandCountry = new SQLiteCommand(sql3, connection);
+                    commandCountry.ExecuteNonQuery();
 
-                string sql4 = "delete from CountryHoliday";
-                commandCountry = new SQLiteCommand(sql4, connection);
-                commandCountry.ExecuteNonQuery();
+                    string sql4 = "delete from CountryHoliday";
+                    commandCountry = new SQLiteCommand(sql4, connection);
+                    commandCountry.ExecuteNonQuery();
 
-                string sql5 = "delete from Holidays";
-                commandCountry = new SQLiteCommand(sql5, connection);
-                commandCountry.ExecuteNonQuery();
+                    string sql5 = "delete from Holidays";
+                    commandCountry = new SQLiteCommand(sql5, connection);
+                    commandCountry.ExecuteNonQuery();
 
-                string sql6 = "delete from Holidays";
-                commandCountry = new SQLiteCommand(sql6, connection);
-                commandCountry.ExecuteNonQuery();
+                    string sql6 = "delete from Holidays";
+                    commandCountry = new SQLiteCommand(sql6, connection);
+                    commandCountry.ExecuteNonQuery();
 
-                string sql7 = "delete from Currency";
-                commandCountry = new SQLiteCommand(sql7, connection);
-                commandCountry.ExecuteNonQuery();
+                    string sql7 = "delete from Currency";
+                    commandCountry = new SQLiteCommand(sql7, connection);
+                    commandCountry.ExecuteNonQuery();
 
-                string sql8 = "delete from CountryCurrency";
-                commandCountry = new SQLiteCommand(sql8, connection);
-                commandCountry.ExecuteNonQuery();
+                    string sql8 = "delete from CountryCurrency";
+                    commandCountry = new SQLiteCommand(sql8, connection);
+                    commandCountry.ExecuteNonQuery();
 
-                string sql9 = "delete from Rates";
-                commandCountry = new SQLiteCommand(sql9, connection);
-                commandCountry.ExecuteNonQuery();
-            }
-            catch (Exception e)
-            {
-                dialogService.ShowMessage("Unable to delete Local Repository", e.Message);
-            }
-
+                    string sql9 = "delete from Rates";
+                    commandCountry = new SQLiteCommand(sql9, connection);
+                    commandCountry.ExecuteNonQuery();
+                }
+                catch (Exception e)
+                {
+                    dialogService.ShowMessage("Unable to delete Local Repository", e.Message);
+                }
+            });
         }
 
-        public void SaveFlag(string url, string filename)
+        /// <summary>
+        /// Saves Flags images in a Folder inside the Project
+        /// </summary>
+        /// <param name="url"></param>
+        /// <param name="filename"></param>
+        public async Task SaveFlag(string url, string filename)
         {
-            if (!Directory.Exists("Images"))
-            {   
-                Directory.CreateDirectory("Images");
-            }
-
-            try
+            await Task.Run(() =>
             {
-                using (WebClient webClient = new WebClient())
+                if (!Directory.Exists("Images"))
                 {
-                    webClient.DownloadFile(url, @"Images\" + filename + ".svg");
-
+                    Directory.CreateDirectory("Images");
                 }
-            }
 
-            catch (Exception e)
-            {
-                dialogService.ShowMessage("Error While Creating SVG Images Folder", e.Message);
-            }
-
-
-            if (!Directory.Exists("ImagesPNG"))
-            {
-                Directory.CreateDirectory("ImagesPNG");
-            }
-
-            try
-            {
-                using (MagickImage image = new MagickImage(@"Images\" + filename + ".svg"))
+                try
                 {
-
-                    image.Write(@"ImagesPNG\" + filename + ".png");
+                    using (WebClient webClient = new WebClient())
+                    {
+                        webClient.DownloadFile(url, @"Images\" + filename + ".svg");
+                    }
                 }
-            }
+                catch (Exception e)
+                {
+                    dialogService.ShowMessage("Error While Creating SVG Images Folder", e.Message);
+                }
 
-            catch (Exception e)
-            {
-                dialogService.ShowMessage("Error While Creating PNG Images Folder", e.Message);
-            }
+                if (!Directory.Exists("ImagesPNG"))
+                {
+                    Directory.CreateDirectory("ImagesPNG");
+                }
+
+                try
+                {
+                    using (MagickImage image = new MagickImage(@"Images\" + filename + ".svg"))
+                    {
+                        image.Write(@"ImagesPNG\" + filename + ".png");
+                    }
+                }
+                catch (Exception e)
+                {
+                    dialogService.ShowMessage("Error While Creating PNG Images Folder", e.Message);
+                }
+            });
         }
     }
 }

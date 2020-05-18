@@ -11,5 +11,7 @@
     {
         public int Percentagem { get; set; } = 0;
         public List<Country> SaveCountries { get; set; } = new List<Country>();
+        public List<CountryHoliday> SaveHolidays { get; set; } = new List<CountryHoliday>();
+        public List<Rates> SaveRates { get; set; } = new List<Rates>();
     }
 }

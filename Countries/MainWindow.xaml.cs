@@ -17,6 +17,9 @@
     using System.Text.RegularExpressions;
     using System.Web;
     using NPOI.HSSF.Record;
+    using System.Net.Http;
+    using WpfAnimatedGif;
+    using System.Drawing;
 
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -48,29 +51,27 @@
         /// <param name="HTMLText"></param>
         /// <param name="decode"></param>
         /// <returns></returns>
-        public static string StripHTML(string HTMLText, bool decode = true)
-        {
-            Regex reg = new Regex("<[^>]+>", RegexOptions.IgnoreCase);
-            var stripped = reg.Replace(HTMLText, "");
-            return decode ? HttpUtility.HtmlDecode(stripped) : stripped;
-        }
+        //public static string StripHTML(string HTMLText, bool decode = true)
+        //{
+        //    Regex reg = new Regex("<[^>]+>", RegexOptions.IgnoreCase);
+        //    var stripped = reg.Replace(HTMLText, "");
+        //    return decode ? HttpUtility.HtmlDecode(stripped) : stripped;
+        //}
 
         /// <summary>
         /// Determines if the Program loads information from the API or the DB
         /// </summary>
-        private async Task LoadCountries()//Tests Internet Connection
+        private async void LoadCountries()//Tests Internet Connection
         {
             bool load;
 
-            labelReport.Content = "Updating Countries Data...";
+            labelReport.Content = "Please wait while data is being loaded...";
 
             var connection = networkService.CheckConnection();
 
-
-            if (connection.IsSucess) //If no Internet Connection is Available
+            if (!connection.IsSucess) //If there is no Internet Connection Available
             {
-                LoadLocalCountries();
-
+                await LoadLocalDataCountries();
                 load = false;
 
             }
@@ -78,6 +79,8 @@
             {
                 await LoadApiCountries();
                 await LoadApiRates();
+                await LoadApiWikipedia();
+
                 load = true;
 
                 //if (!Directory.Exists("Flags")) //If directory doesn't exist
@@ -120,14 +123,16 @@
         /// <returns></returns>
         private async Task LoadApiCountries()
         {
-            dataService.DeleteData();
-
             Progress<ProgressReport> progress = new Progress<ProgressReport>();
             progress.ProgressChanged += ReportProgress;
+            labelReport.Content = "Gathering information...";
+
+            await dataService.DeleteData(); 
 
             var response = await apiService.GetCountries("http://restcountries.eu", "/rest/v2/all", progress);
             ListOfCountries = (List<Country>)response.Result;
-            await dataService.SaveDataCountry(ListOfCountries);
+            
+            await dataService.SaveDataCountry(ListOfCountries, progress);
 
             //Images 
 
@@ -135,11 +140,16 @@
             {
                 foreach (var item in ListOfCountries)
                 {
-                    dataService.SaveFlag(item.Flag, item.Name);
+                    if(!File.Exists(Environment.CurrentDirectory + "/ImagesPNG" + $"/{item.Name}.png"))
+                    {
+                        await dataService.SaveFlag(item.Flag, item.Name);
+                    }
                 }
 
                 Directory.Delete("Images", true);
             }
+
+
 
 
         }
@@ -155,12 +165,12 @@
         {
             Progress<ProgressReport> progress = new Progress<ProgressReport>();
             progress.ProgressChanged += ReportProgress;
+            labelReport.Content = "Updating Rates Information.";
 
-            var response = await apiService.GetRates("https://cambiosrafa.azurewebsites.net", "/api/Rates");
+            var response = await apiService.GetRates("https://cambiosrafa.azurewebsites.net", "/api/Rates", progress);
             ListOfApiRates = (List<Rates>)response.Result;
 
-            await dataService.SaveDataRates(ListOfApiRates);
-
+            await dataService.SaveDataRates(ListOfApiRates, progress);
         }
 
         /// <summary>
@@ -181,12 +191,10 @@
         /// <returns></returns>
         private async Task LoadApiHoliday(string c) //FAZER COM QUE SO ENTRE AQUI SE HOUVER LIGACAO A NET
         {
-            Progress<ProgressReport> progress = new Progress<ProgressReport>();
-            progress.ProgressChanged += ReportProgress;
-
             int auxcount = 0;
+            labelReport.Content = "Updating Holidays Information.";
 
-            var response2 = await apiService.GetHolidays("https://holidayapi.com", $"/v1/holidays?pretty&key=dd888656-3e3a-4e83-a1e9-85823f145c04&country={c}&year=2019");
+            var response2 = await apiService.GetHolidays("https://holidayapi.com", $"/v1/holidays?pretty&key=f007d74d-60a8-448f-8974-b3805fea0463&country={c}&year=2019");
             var ListOfCountryHolidays = (CountryHoliday)response2.Result;
 
             //await dataService.SaveDataHolidays(ListOfCountryHolidays);
@@ -203,8 +211,6 @@
 
                 listBoxCountriesHolidays.ItemsSource = listaux;
                 countHolidays.Content = $"{auxcount} Holidays:";
-                Country C = new Country();
-                C.holidays = listaux;
             }
             else
             {
@@ -233,6 +239,12 @@
                 ListBoxLanguages.ItemsSource = selectedCountryLanguage;
             }
 
+
+            //LblRegionDescription.Content = $"{c.Region} ({c.Subregion}):";
+            //TxtRegionDescription.Text = outputregion;
+            //LblDescription.Content = $"{c.Name} ({c.NativeName}):";
+            //TxtDescription.Text = output;
+
             this.TxtBlockName.Text = selectedCountry.Name;
             this.TxtBlockNativeName.Text = selectedCountry.NativeName;
             this.TxtBlockCapital.Text = selectedCountry.Capital;
@@ -244,9 +256,9 @@
 
             CheckData();
 
-            string flagName = selectedCountry.Alpha3Code;
+            //string flagName = selectedCountry.Alpha3Code;
 
-            if (connection.IsSucess) //If no Internet Connection is Available
+            if (connection.IsSucess)
             {
                 await LoadApiHoliday(selectedCountry.Alpha2Code);
             }
@@ -269,7 +281,7 @@
                 }
                 else if (!File.Exists(Environment.CurrentDirectory + "/ImagesPNG" + $"/{selectedCountry.Name}.png"))
                 {
-                    img.UriSource = new Uri(Environment.CurrentDirectory + "/Resources/NoImageAvailable.png");
+                    ////img.UriSource = new Uri(Environment.CurrentDirectory + "/Resources/NoImageAvailable.png");
                     //FlagImage.Stretch = Stretch.fill;
                 }
 
@@ -282,7 +294,6 @@
                 BorderFlag.Height = FlagImage.Height;
                 FlagImage.Stretch = Stretch.Fill;
 
-
             }
             catch
             {
@@ -290,7 +301,7 @@
                 imgregion.BeginInit();
                 if (selectedCountry.Region == null)
                 {
-                    imgregion.UriSource = new Uri(Environment.CurrentDirectory + "/Resources/NoImageAvailable.png");
+                //    imgregion.UriSource = new Uri(Environment.CurrentDirectory + "/Resources/NoImageAvailable.png");
                 }
 
                 MessageBox.Show("Failed When Presenting Selected Country Flag Image");
@@ -340,7 +351,7 @@
                 imgregion.BeginInit();
                 if (selectedCountry.Region == null)
                 {
-                    imgregion.UriSource = new Uri(Environment.CurrentDirectory + "/Resources/NoImageAvailable.png");
+                    //imgregion.UriSource = new Uri(Environment.CurrentDirectory + "/Resources/NoImageAvailable.png");
                 }
 
                 MessageBox.Show("Failed When Presenting Selected Country Regional Bloc Location Image");
@@ -364,10 +375,10 @@
                         {
                             listauxrate.Add(r);
                         }
-                        else if (c.CurrencyName.ToLower() == r.Name.ToLower())
-                        {
-                            listauxrate.Add(r);
-                        }
+                        //else if (c.CurrencyName.ToLower() == r.Name.ToLower())
+                        //{
+                        //    listauxrate.Add(r);
+                        //}
                     }
                 }
 
@@ -495,17 +506,14 @@
         /// </summary>
         /// <param name="c"></param>
         /// <returns></returns>
-        private void LoadLocalCountries()
+        private async Task LoadLocalDataCountries()
         {
-            ProgressReport report = new ProgressReport();
+            //Progress<ProgressReport> progress = new Progress<ProgressReport>();
+            //progress.ProgressChanged += ReportProgress;
 
-            ListOfCountries = dataService.GetLocalDataCountry(); //Returns a Local Repository containing The various API's Data
-            Progress<ProgressReport> progress = new Progress<ProgressReport>();
+            ListOfCountries = await dataService.GetLocalDataCountry(); //Returns a Local Repository containing The various API's Data
 
-            ListOfApiRates = dataService.GetLocalDataRates();
-
-            progress.ProgressChanged += ReportProgress;
-
+            ListOfApiRates = await dataService.GetLocalDataRates();
         }
 
         /// <summary>
@@ -525,8 +533,7 @@
         /// <param name="e"></param>
         private void BtnInfo_Click(object sender, RoutedEventArgs e)
         {
-            this.Hide();
-            About form = new About();
+            CreditsForm form = new CreditsForm();
             form.Show();
         }
 
@@ -576,6 +583,141 @@
             var valorConvertido = value / (decimal)taxaOrigem.TaxRate * (decimal)taxaDestino.TaxRate;
             TxtResult.Text = string.Format("{0} {1:C2} = {2} {3:C2}", taxaOrigem.Code, value, taxaDestino.Code, valorConvertido);
 
+        }
+        private async Task LoadApiWikipedia()
+        {
+            List<string> RegionList = new List<string>();
+
+            if(!Directory.Exists("CountriesTexts"))
+            {
+                Directory.CreateDirectory("CountriesTexts");
+            }
+
+            foreach (var c in ListOfCountries)
+            {
+                string path = Environment.CurrentDirectory + "/CountriesTexts" + $"/{c.Alpha2Code}.txt";
+                string BackupPath = Environment.CurrentDirectory + "/BackupCountriesTexts" + $"/{c.Alpha2Code}.txt";
+                FileInfo textFile = new FileInfo(path);
+
+                try
+                {
+                    var response = await GetText("https://en.wikipedia.org/w/api.php", $"?format=xml&action=query&prop=extracts&titles={c.Name.Replace((' '), ('_')).Replace(("'"), (""))}&redirects=true", c);
+                    string output = (string)response.Result;
+
+                    if (!File.Exists(path))
+                    {
+                        if((c.Alpha2Code == "CG") || (c.Alpha2Code == "GE"))
+                        {
+                            if (File.Exists(BackupPath))
+                            {
+                                textFile = new FileInfo(BackupPath);
+                                File.Delete(path);
+                                textFile.CopyTo(path);
+                            }
+                        }
+                     
+                        using (StreamWriter sw = File.CreateText(path))
+                        {
+                            sw.WriteLine(output);
+                        }
+
+                        //if ()
+                        //{
+                        //    textFile = new FileInfo(BackupPath);
+                        //    File.Delete(path);
+                        //    textFile.CopyTo(path);
+                        //}
+
+                    }
+                }
+                catch //If there's a problem downloading 
+                {
+                    if (File.Exists(BackupPath))
+                    {
+                        textFile = new FileInfo(BackupPath);
+                        File.Delete(path);
+                        textFile.CopyTo(path);
+                    }
+                }
+            }
+
+            //if (c.Region != null)
+            //{
+            //    if (!RegionList.Contains(c.Region.ToString()))
+            //    {
+            //        var responseregion = await GetText("https://en.wikipedia.org/w/api.php", $"?format=xml&action=query&prop=extracts&titles={c.Region}&redirects=true", c);
+            //        string outputregion = (string)responseregion.Result;
+            //        RegionList.Add(c.Region.ToString());
+            //    }
+
+            //}
+
+            //foreach(var region in RegionList)
+            //{
+            //    if(!RegionList.Contains(c.Region.ToString()))
+            //}
+
+            ////Region Text
+
+            ////LblRegionDescription.Content = $"{c.Region} ({c.Subregion}):";
+            ////TxtRegionDescription.Text = outputregion;
+            //LblDescription.Content = $"{c.Name} ({c.NativeName}):";
+            //TxtDescription.Text = output;
+
+
+        }
+        public async Task<Response> GetText(string urlBase, string controller, Country c)
+        {
+            try
+            {
+                var client = new HttpClient
+                {
+                    BaseAddress = new Uri(urlBase)//Onde está o endereço base da API
+                }; //Criar um Http para fazer a ligação externa via http
+
+                var response = await client.GetAsync(controller);//Onde está o Controlador da API
+                var result = await response.Content.ReadAsStringAsync();//Carregar os resultados em forma de string para dentro do result
+
+                string[] parts = result.Split(new string[] { "&lt;/p&gt;" }, StringSplitOptions.None); //Split the string by paragraphs (closing paragraph tag)
+
+                var output = string.Empty;
+
+                if (parts[1].Contains(c.Name))
+                {//-Mudar o nome consosante o país
+                    output = parts[1];
+                }
+                else
+                {
+                    output = parts[2];
+                }
+
+                //Remove the tags from the XML
+                output = Regex.Replace(output, @"&lt;[^&gt;]+&gt;", string.Empty); //Remove Tags
+                output = Regex.Replace(output, @"(&lt;[\s\S]+?&gt;)", string.Empty); //Remove remaining Tags / Tags' remains
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    return new Response
+                    {
+                        IsSucess = false,
+                        Message = result
+                    };
+                }
+
+                return new Response
+                {
+                    IsSucess = true,
+                    Result = output
+                };
+            }
+            catch (Exception ex)
+            {
+                return new Response
+                {
+                    IsSucess = false,
+                    Message = ex.Message
+                };
+            }
         }
     }
 }

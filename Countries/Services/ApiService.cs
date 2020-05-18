@@ -114,14 +114,13 @@ namespace Countries.Services
         /// <param name="urlBase"></param>
         /// <param name="controller"></param>
         /// <returns></returns>
-        public async Task<Response> GetHolidays(string urlBase, string controller)
+        public async Task <Response> GetHolidays(string urlBase, string controller)
         {
-            
             try
             {
                 var client = new HttpClient();
                 client.BaseAddress = new Uri(urlBase); //API Adress
-                var response = await client.GetAsync(controller); //API Controller
+                var response = await  client.GetAsync(controller); //API Controller
                 var result2 = await response.Content.ReadAsStringAsync();//Uploads the results in the form of String into (object) Result
 
                 if (!response.IsSuccessStatusCode)
@@ -152,8 +151,16 @@ namespace Countries.Services
             }
         }
 
-        public async Task<Response> GetRates(string urlBase, string controller) 
+        /// <summary>
+        /// Gets Data from cambiosrafa API
+        /// </summary>
+        /// <param name="urlBase"></param>
+        /// <param name="controller"></param>
+        /// <returns></returns>
+        public async Task<Response> GetRates(string urlBase, string controller, IProgress<ProgressReport> progress) 
         {
+            ProgressReport report3 = new ProgressReport();
+
             try
             {
                 var client = new HttpClient();
@@ -171,6 +178,10 @@ namespace Countries.Services
                 }
 
                 var rates = JsonConvert.DeserializeObject<List<Rates>>(result);
+
+                report3.SaveRates = rates;
+                report3.Percentagem = (report3.SaveCountries.Count * 100) / rates.Count;
+                progress.Report(report3);
 
                 return new Response
                 {

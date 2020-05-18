@@ -10,7 +10,6 @@
     {
         public string name { get; set; }
         public string date { get; set; }
-        public string country { get; set; }
         public override string ToString()
         {
             return $"{name}, Celebrated at {date};";

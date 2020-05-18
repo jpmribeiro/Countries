@@ -15,20 +15,13 @@ using System.Windows.Shapes;
 namespace Countries
 {
     /// <summary>
-    /// Interaction logic for About.xaml
+    /// Interaction logic for CreditsForm.xaml
     /// </summary>
-    public partial class About : Window
+    public partial class CreditsForm : Window
     {
-        public About()
+        public CreditsForm()
         {
             InitializeComponent();
-        }
-
-        private void Button_Click(object sender, RoutedEventArgs e)
-        {
-            this.Close();
-            MainWindow form = new MainWindow();
-            form.Show();
         }
     }
 }
