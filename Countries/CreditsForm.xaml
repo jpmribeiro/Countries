@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:Countries"
         xmlns:gif="http://wpfanimatedgif.codeplex.com" x:Class="Countries.CreditsForm"
         mc:Ignorable="d"
-        Title="CreditsForm" Height="450" Width="800" WindowStartupLocation="CenterScreen">
+        Title="Credits" Height="450" Width="800" WindowStartupLocation="CenterScreen">
     <Grid>
         <TextBlock HorizontalAlignment="Left" TextWrapping="Wrap" Text="Conceção de um Sistema de Informação Winforms de Todos os Países do Mundo" VerticalAlignment="Top" Margin="168,275,0,0" Foreground="#FF1B1414" TextAlignment="Center" Width="439" />
         <TextBlock HorizontalAlignment="Left" TextWrapping="Wrap" Text="UF5143 - Programação de Computadores Orientada ao Objecto CET 45" VerticalAlignment="Top" Margin="168,291,0,0" Foreground="#FF1B1414" TextAlignment="Center" Width="439" />

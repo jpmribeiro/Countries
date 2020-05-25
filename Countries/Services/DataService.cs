@@ -462,7 +462,7 @@
         /// Gets Rates Table from DB
         /// </summary>
         /// <returns></returns>
-        public async Task<List<Rates>>GetLocalDataRates()
+        public async Task<List<Rates>> GetLocalDataRates()
         { 
             List<Rates> Rates = new List<Rates>();
 
@@ -471,16 +471,16 @@
                 string sql = "select RateId, Code, TaxRate, Name from Rates";
                 commandCountry = new SQLiteCommand(sql, connection);
                 SQLiteDataReader reader = commandCountry.ExecuteReader(); //Lê cada registo
-                
-                while (reader.Read())
+
+                while (await Task.Run(() => reader.Read()))
                 {
-                    Rates.Add(new Rates
+                    await Task.Run(() => Rates.Add(new Rates
                     {
                         RateId = (int)reader["RateId"],
                         Code = (string)reader["Code"],
                         Name = (string)reader["Name"],
                         TaxRate = (double)reader["TaxRate"],
-                    });
+                    }));
                 }
 
                 connection.Close();
@@ -493,8 +493,10 @@
                 dialogService.ShowMessage("Erro", e.Message);
                 return null;
             }
-        }
 
+
+
+        }
 
         /// <summary>
         /// Drops every Table in the DB
