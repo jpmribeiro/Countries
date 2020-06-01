@@ -38,37 +38,28 @@
                 <TabItem Header="Country" Foreground="#FF327FDC">
                     <StackPanel Margin="0,21,0,0">
                         <Separator></Separator>
-                        <Border x:Name="BorderFlag" HorizontalAlignment="Center" VerticalAlignment="Center" BorderBrush="Black" BorderThickness="2" Height="130" Width="200" Margin="129,0">
+                        <Border x:Name="BorderFlag" HorizontalAlignment="Center" VerticalAlignment="Center" BorderBrush="Black" BorderThickness="2" Height="130" Width="214" Margin="116,0,128,0">
                             <Image x:Name="FlagImage"/>
                         </Border>
-                        <Separator Height="16"></Separator>
+                        <Separator Height="13"></Separator>
                         <Label x:Name="LblDescription" HorizontalContentAlignment="Center"></Label>
                         <Separator Height="16"></Separator>
-                        <TextBlock x:Name="TxtDescription" TextWrapping="Wrap" TextAlignment="Center" Foreground="#FF070708" />
+                        <ScrollViewer Height="200">
+                            <TextBlock x:Name="TxtDescription" TextWrapping="Wrap" TextAlignment="Center" Foreground="#FF070708" />
+                        </ScrollViewer>
                     </StackPanel>
 
 
                 </TabItem>
                 <TabItem Header="Region" Foreground="#FF327FDC">
-                    <StackPanel  Orientation="Vertical">
-                        <Separator Height="16"></Separator>
-                        <Label x:Name="LblRegionDescription" HorizontalContentAlignment="Center"></Label>
-                        <Separator Height="16"></Separator>
-                        <TextBlock x:Name="TxtRegionDescription" TextWrapping="Wrap" TextAlignment="Center" Foreground="#FF070708" />
-                        <Border HorizontalAlignment="Center" VerticalAlignment="Center" Height="168" Margin="70,0" RenderTransformOrigin="0.5,0.5" Width="198">
-                            <Border.RenderTransform>
-                                <TransformGroup>
-                                    <ScaleTransform ScaleX="-1"/>
-                                    <SkewTransform/>
-                                    <RotateTransform/>
-                                    <TranslateTransform/>
-                                </TransformGroup>
-                            </Border.RenderTransform>
-                            <Image x:Name="RegionImage" Margin="0,0,0,10"/>
-
-                        </Border>
+                    <StackPanel>
+                        <Separator Height="54"></Separator>
+                        <TextBlock x:Name="txtRegion" HorizontalAlignment="Center"></TextBlock>
+                        <Separator Height="69"></Separator>
+                        <Image x:Name="RegionImage" Margin="34,-56,32,-87" Height="266"/>
                     </StackPanel>
                 </TabItem>
+
                 <TabItem Header="General" Foreground="#FF327FDC">
                     <StackPanel Margin="0,0,0,7">
                         <Label Content="Name" FontWeight="Bold"  HorizontalContentAlignment="Center"/>

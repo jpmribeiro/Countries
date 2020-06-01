@@ -16,9 +16,7 @@
     public class DataService
     {
         private SQLiteConnection connection;
-
         private SQLiteCommand commandCountry;
-
         private DialogService dialogService;
 
 
@@ -213,7 +211,6 @@
 
         }
 
-
         /// <summary>
         /// Saves the information from rates API in the DB
         /// </summary>
@@ -244,33 +241,6 @@
 
         }
 
-
-        //public async Task SaveDataHolidays(List<CountryHoliday> Holidays)
-        //{
-        //    try
-        //    {
-        //        foreach (var holiday in Holidays)
-        //        {
-        //            string sql6 = string.Format("insert into Holiday (Name, date) values ('{0}', '{1}')", holiday.name, holiday.date);
-        //            commandCountry = new SQLiteCommand(sql6, connection);
-        //            await Task.Run(() => commandCountry.ExecuteNonQuery());
-
-        //            string sql7 = string.Format("insert into CountryHoliday(Alpha3Code, Name) values ('{0}', '{1}')", c.Alpha3Code, holiday.name);
-        //            commandCountry = new SQLiteCommand(sql7, connection);
-        //            await Task.Run(() => commandCountry.ExecuteNonQuery());
-        //        }
-
-        //        connection.Close();
-
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        dialogService.ShowMessage("Unable to Save Holdays Data", e.Message);
-        //    }
-           
-        //}
-
-
         /// <summary>
         /// Checks info before saving data in the Languages Table
         /// </summary>
@@ -286,7 +256,6 @@
                 language.NativeName = language.NativeName.Replace("'", " ");
             }
         }
-
 
         /// <summary>
         /// Filters info before saving data in the Countries Table 
@@ -325,9 +294,8 @@
 
         }
 
-
         /// <summary>
-        /// Grts Table Country from DB
+        /// Gets Table Country from DB
         /// </summary>
         /// <returns></returns>
         public async Task<List<Country>> GetLocalDataCountry()
@@ -456,7 +424,6 @@
                 return null;
             }
         }
-
 
         /// <summary>
         /// Gets Rates Table from DB
@@ -594,5 +561,12 @@
                 }
             });
         }
+
+        //public async Task SaveCountryText()
+        //{
+
+        //}
+
+
     }
 }

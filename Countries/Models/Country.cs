@@ -17,7 +17,7 @@
         public List<string> AltSpellings { get; set; }
         public string Region { get; set; }
         public string Subregion { get; set; }
-        public int Population { get; set; }
+        public int? Population { get; set; }
         public List<double> Latlng { get; set; }
         public string Demonym { get; set; }
         public double? Area { get; set; }
