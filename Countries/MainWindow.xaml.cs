@@ -616,13 +616,19 @@
 
                 try //Rates 
                 {
-                    List<Rates> listauxrate = new List<Rates>();
+                    OriginValue.ItemsSource = null;
+                    DestinationValue.ItemsSource = null;
 
+                    txtValue.Text = string.Empty;
+                    TxtResult.Text = string.Empty;
+
+                    List<Rates> listauxrate = new List<Rates>();
                     List<Currency> selectedCountryCurrency = (selectedCountry.Currencies);
 
                     ListBoxCountryCurrency.ItemsSource = selectedCountryCurrency;
 
                     if (ListOfApiRates.Count > 0)
+                    {
                         foreach (Rates r in ListOfApiRates)
                         {
                             foreach (Currency c in selectedCountryCurrency)
@@ -633,18 +639,20 @@
                                 }
                             }
 
-                            OriginValue.ItemsSource = listauxrate;
-                            DestinationValue.ItemsSource = ListOfApiRates;
-
-                            if (selectedCountryCurrency.Count == 1)
-                            {
-                                txtCountryCurrency.Text = $"{selectedCountry.Name} has {selectedCountryCurrency.Count} Currency";
-                            }
-                            if (selectedCountryCurrency.Count > 1)
-                            {
-                                txtCountryCurrency.Text = $"{selectedCountry.Name} has {selectedCountryCurrency.Count} Currencies";
-                            }
                         }
+
+                        OriginValue.ItemsSource = listauxrate;
+                        DestinationValue.ItemsSource = ListOfApiRates;
+
+                        if (selectedCountryCurrency.Count == 1)
+                        {
+                            txtCountryCurrency.Text = $"{selectedCountry.Name} has {selectedCountryCurrency.Count} Currency";
+                        }
+                        if (selectedCountryCurrency.Count > 1)
+                        {
+                            txtCountryCurrency.Text = $"{selectedCountry.Name} has {selectedCountryCurrency.Count} Currencies";
+                        }
+                    }
                 }
                 catch
                 {
@@ -789,6 +797,7 @@
             if (!decimal.TryParse(txtValue.Text, out value))
             {
                 dialogService.ShowMessage("Error", "Typed Value Must be a Intenger");
+                txtValue.Text = string.Empty;
                 return;
             }
 
