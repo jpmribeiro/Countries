@@ -6,12 +6,13 @@
         xmlns:local="clr-namespace:Countries"
         xmlns:gif="http://wpfanimatedgif.codeplex.com" x:Class="Countries.CreditsForm"
         mc:Ignorable="d"
+        Icon="/InfoIcon.png"
         Title="Credits" Height="450" Width="800" WindowStartupLocation="CenterScreen">
     <Grid>
         <TextBlock HorizontalAlignment="Left" TextWrapping="Wrap" Text="Countries Wiki" VerticalAlignment="Top" Margin="168,275,0,0" Foreground="#FF1B1414" TextAlignment="Center" Width="439" />
         <TextBlock HorizontalAlignment="Left" TextWrapping="Wrap" Text="UF5143, CET 45, 2020" VerticalAlignment="Top" Margin="168,291,0,0" Foreground="#FF1B1414" TextAlignment="Center" Width="439" />
         <TextBlock HorizontalAlignment="Left" TextWrapping="Wrap" Text="Teacher Rafael Santos" VerticalAlignment="Top" Margin="168,323,0,0" Foreground="#FF1B1414" TextAlignment="Center" Width="439" />
-        <TextBlock HorizontalAlignment="Left" TextWrapping="Wrap" Text="Version 1.0.1" VerticalAlignment="Top" Margin="168,307,0,0" Foreground="#FF1B1414" TextAlignment="Center" Width="439" />
+        <TextBlock HorizontalAlignment="Left" TextWrapping="Wrap" Text="Version 1.0" VerticalAlignment="Top" Margin="168,307,0,0" Foreground="#FF1B1414" TextAlignment="Center" Width="439" />
         <TextBlock HorizontalAlignment="Left" TextWrapping="Wrap" Text="Student João Pedro Magalhães Ribeiro" VerticalAlignment="Top" Margin="168,339,0,0" Foreground="#FF1B1414" TextAlignment="Center" Width="439" />
         <Image HorizontalAlignment="Left" Height="100" VerticalAlignment="Top" Width="100" Margin="329,88,0,0" gif:ImageBehavior.AnimatedSource="CINEL-logo2.JPG"/>
     </Grid>

@@ -6,6 +6,7 @@
         xmlns:local="clr-namespace:Countries"
         mc:Ignorable="d"
         Loaded="Window_Loaded"
+        Icon="/CountriesIcon.png"
         Title="COUNTRIES" Height="650" Width="957" ResizeMode="NoResize" Topmost="False" WindowState="Normal" WindowStartupLocation="CenterScreen" WindowStyle="None">
     <Window.Background>
         <ImageBrush ImageSource="background2.jpg" Stretch="UniformToFill"/>
@@ -85,7 +86,9 @@
                 <TabItem Header="Holidays" Foreground="#FF327FDC">
                     <StackPanel>
                         <Label x:Name="countHolidays" Foreground="#FF327FDC" HorizontalAlignment="Center" FontWeight="Bold"/>
-                        <ListBox x:Name="listBoxCountriesHolidays" Height="404" BorderBrush="Transparent" HorizontalAlignment="Center" HorizontalContentAlignment="Center"/>
+                        <ScrollViewer Height="396">
+                            <TextBlock x:Name="txtCountriesHolidays" Height="404" HorizontalAlignment="Center" Width="426"/>
+                        </ScrollViewer>
                     </StackPanel>
                 </TabItem>
                 <TabItem Header="Currency" Foreground="#FF327FDC">

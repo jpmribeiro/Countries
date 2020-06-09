@@ -10,16 +10,9 @@
     using System.Windows.Media;
     using System.Windows.Media.Imaging;
     using System.IO;
-    using Svg;
-    using System.Globalization;
-    using System.Net;
-    using System.Drawing.Imaging;
     using System.Text.RegularExpressions;
-    using System.Web;
-    using NPOI.HSSF.Record;
     using System.Net.Http;
-    using WpfAnimatedGif;
-    using System.Drawing;
+    using System.Linq;
 
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -62,9 +55,6 @@
             {
                 await LoadLocalDataCountries();
 
-                List<Country> listBoxList = ListOfCountries;
-                listBoxCountries.ItemsSource = listBoxList;
-
                 load = false;
 
             }
@@ -73,33 +63,40 @@
                 await LoadApiCountries();
                 await LoadApiRates();
                 await LoadApiWikipedia();
+                await LoadApiHoliday();
 
                 List<Country> listBoxList = ListOfCountries;
                 listBoxCountries.ItemsSource = listBoxList;
 
                 load = true;
-
-                await SaveCountryData();
-                await SaveCountryRates();
-
-            }
-
-            if (load)
-            {
-                labelReport.Content = string.Format("(Data uploaded from the Internet, ({0:F})).", DateTime.Now.ToString("dddd, dd MMMM yyyy", new System.Globalization.CultureInfo("en-EN")));
-            }
-            else
-            {
-                labelReport.Content = string.Format("(Data uploaded from a local repository({0:F})).", DateTime.Now.ToString("dddd, dd MMMM yyyy", new System.Globalization.CultureInfo("en-EN")));
             }
 
             if ((ListOfCountries == null) || (ListOfCountries.Count == 0))
             {
-                labelReport.Content = "Plese make sure you have a Internet Connection when you use the application for the first time. Try Again Later!";
+                labelReport.Content = "Please make sure you have a Internet Connection when you use the application for the first time. Try Again Later!";
 
                 MessageBox.Show("Before using the App for the first time make sure there is a Internet Connection");
 
                 return;
+            }
+           
+            if (load)
+            {
+
+                await SaveCountryRates();
+                await SaveCountryData();
+
+                labelReport.Content = string.Format("(Data uploaded from the Internet, ({0:F})).", DateTime.Now.ToString("dddd, dd MMMM yyyy", new System.Globalization.CultureInfo("en-EN")));
+            }
+            else
+            {
+                labelReport.Content = string.Format("(Data uploaded from local Database, ({0:F})).", DateTime.Now.ToString("dddd, dd MMMM yyyy", new System.Globalization.CultureInfo("en-EN")));
+                
+                if ((ListOfCountries.Count > 0) || (ListOfCountries.Count < 250))
+                {
+                    MessageBox.Show("Your Database is incomplete. To prevent this, run your program while connected to the Internet. Try Again Later!");
+                }
+
             }
 
         }
@@ -115,26 +112,22 @@
         {
             Progress<ProgressReport> progress = new Progress<ProgressReport>();
             progress.ProgressChanged += ReportProgress;
+            labelReport.Content = "Downloading Countries Information.";
 
             await dataService.DeleteData();
 
             var response = await apiService.GetCountries("http://restcountries.eu", "/rest/v2/all", progress);
             ListOfCountries = (List<Country>)response.Result;
 
-            //await dataService.SaveDataCountry(ListOfCountries, progress);
-            //labelReport.Content = "Saving Countries Data into DB.";
 
             //Images 
 
-            if (!Directory.Exists("ImagesPNG")) //If directory doesn't exist
+            labelReport.Content = "Downloading Countries Flags Information.";
+
+            if (!Directory.Exists("FlagsPNG")) //If directory doesn't exist
             {
-                foreach (var item in ListOfCountries)
-                {
-                    if (!File.Exists(Environment.CurrentDirectory + "/ImagesPNG" + $"/{item.Name}.png"))
-                    {
-                        await dataService.SaveFlag(item.Flag, item.Name);
-                    }
-                }
+
+                await dataService.SaveFlag(ListOfCountries, progress);
 
                 Directory.Delete("Images", true);
             }
@@ -157,8 +150,6 @@
             var response = await apiService.GetRates("https://cambiosrafa.azurewebsites.net", "/api/Rates", progress);
             ListOfApiRates = (List<Rates>)response.Result;
 
-            //await dataService.SaveDataRates(ListOfApiRates, progress);
-            //labelReport.Content = "Saving Rates Data into DB.";
         }
 
         /// <summary>
@@ -166,41 +157,77 @@
         /// </summary>
         /// <param name="c"></param>
         /// <returns></returns>
-        private async Task LoadApiHoliday(string c) //FAZER COM QUE SO ENTRE AQUI SE HOUVER LIGACAO A NET
+        private async Task LoadApiHoliday()
         {
-            try
+            if(ListOfCountries!=null)
             {
-                int auxcount = 0;
-                labelReport.Content = "Updating Holidays Information.";
-
-                var response2 = await apiService.GetHolidays("https://holidayapi.com", $"/v1/holidays?pretty&key=f007d74d-60a8-448f-8974-b3805fea0463&country={c}&year=2019");
-                var ListOfCountryHolidays = (CountryHoliday)response2.Result;
-
-                //await dataService.SaveDataHolidays(ListOfCountryHolidays);
-
-                List<Holiday> listaux = new List<Holiday>();
-
-                if (ListOfCountryHolidays != null)
+                if (!Directory.Exists("HolidaysTexts"))
                 {
-                    foreach (var holiday in ListOfCountryHolidays.holidays)
+                    Directory.CreateDirectory("HolidaysTexts");
+                }
+
+                try
+                {
+                    foreach (Country c in ListOfCountries)
                     {
-                        listaux.Add(holiday);
-                        auxcount++;
+                        string path = Environment.CurrentDirectory + "/HolidaysTexts" + $"/{c.Alpha3Code}.txt";
+                        string BackupPath = Environment.CurrentDirectory + "/BackupHolidaysTexts" + $"/{c.Alpha3Code}.txt";
+
+                        FileInfo textFile = new FileInfo(path);
+
+                        if (!File.Exists(path))
+                        {
+                            int auxcount = 0;
+                            labelReport.Content = "Updating Holidays Information.";
+
+                            var response2 = await apiService.GetHolidays("https://holidayapi.com", $"/v1/holidays?pretty&key=f007d74d-60a8-448f-8974-b3805fea0463&country={c.Alpha2Code}&year=2019");
+                            var ListOfCountryHolidays = (CountryHoliday)response2.Result;
+
+                            List<Holiday> listaux = new List<Holiday>();
+
+                            if (ListOfCountryHolidays != null)
+                            {
+                                foreach (var holiday in ListOfCountryHolidays.holidays)
+                                {
+                                    listaux.Add(holiday);
+                                    auxcount++;
+                                }
+
+                                StreamWriter sw = File.CreateText(path);
+
+                                foreach (Holiday holiday in listaux)
+                                {
+                                    sw.WriteLine(holiday.ToString());
+                                }
+
+                                sw.Close();
+                                listaux.Clear();
+
+                            }
+                            else
+                            {
+                                countHolidays.Content = $"Unable to Show this Country Holidays due to the lack of Internet Connection.";
+                                txtCountriesHolidays.Text = string.Empty;
+                            }
+                        }
+                        else
+                        {
+                            if (File.Exists(BackupPath))
+                            {
+                                textFile = new FileInfo(BackupPath);
+                                File.Delete(path);
+                                textFile.CopyTo(path);
+                            }
+                        }
                     }
 
-                    listBoxCountriesHolidays.ItemsSource = listaux;
-                    countHolidays.Content = $"{auxcount} Holidays:";
                 }
-                else
+                catch
                 {
-                    countHolidays.Content = $"There is no Information Available regarding this Country's Holidays";
-                    listBoxCountriesHolidays.ItemsSource = null;
+                    MessageBox.Show("Error While loading Countries Holidays Info");
                 }
             }
-            catch
-            {
-                MessageBox.Show("Error While loading Countries Holidays Info");
-            }
+           
         }
 
         /// <summary>
@@ -209,7 +236,7 @@
         /// <returns></returns>
         private async Task LoadApiWikipedia()
         {
-            List<string> RegionList = new List<string>();
+            labelReport.Content = "Downloading Countries Texts Information.";
 
             if (!Directory.Exists("CountriesTexts"))
             {
@@ -218,10 +245,10 @@
 
             foreach (var c in ListOfCountries)
             {
-                string path = Environment.CurrentDirectory + "/CountriesTexts" + $"/{c.Alpha2Code}.txt";
-                string BackupPath = Environment.CurrentDirectory + "/BackupCountriesTexts" + $"/{c.Alpha2Code}.txt";
+                string path = Environment.CurrentDirectory + "/CountriesTexts" + $"/{c.Alpha3Code}.txt";
+                string BackupPath = Environment.CurrentDirectory + "/BackupCountriesTexts" + $"/{c.Alpha3Code}.txt";
 
-                FileInfo textFile = new FileInfo(path);
+                FileInfo textFile;
 
                 try
                 {
@@ -229,30 +256,35 @@
                     {
                         var response = await GetText("https://en.wikipedia.org/w/api.php", $"?format=xml&action=query&prop=extracts&titles={c.Name.Replace((' '), ('_')).Replace(("'"), (""))}&redirects=true", c);
                         string output = (string)response.Result;
+                        
+                        if (!string.IsNullOrEmpty(output) && output.Contains("\n\n"))
+                            output = output.Replace("\n\n", "");
+                        else if (!string.IsNullOrEmpty(output) && output.Contains("\n"))
+                            output = output.Replace("\n", "");
 
-                        using (StreamWriter sw = File.CreateText(path))
+                        if ((c.Alpha3Code == "COG") || (c.Alpha3Code == "GEO")) //Republic of Congo and Georgia Alpha Codes are ambiguous in wikipedia
                         {
-                            if ((c.Alpha2Code == "CG") || (c.Alpha2Code == "GE")) //Republic of Congo and Georgia Alpha Codes are ambiguous in wikipedia
+                            if (File.Exists(BackupPath)) //If there is a file in the BackUps Folder with those Alpha Codes
                             {
-                                if (File.Exists(BackupPath)) //If there is a file in the BackUps Folder with those Alpha Codes
-                                {
-                                    textFile = new FileInfo(BackupPath);
-                                    File.Delete(path);
-                                    textFile.CopyTo(path);
-                                }
+                                textFile = new FileInfo(BackupPath);
+                                File.Delete(path);
+                                textFile.CopyTo(path);
                             }
-                            else if (!string.IsNullOrEmpty(output))
+                        }
+                        else if (!string.IsNullOrEmpty(output))
+                        {
+                            StreamWriter sw = File.CreateText(path);
+
+                            sw.WriteLine(output);
+                            sw.Close();
+                        }
+                        else
+                        {
+                            if (File.Exists(BackupPath))
                             {
-                                sw.WriteLine(output);
-                            }
-                            else
-                            {
-                                if (File.Exists(BackupPath))
-                                {
-                                    textFile = new FileInfo(BackupPath);
-                                    File.Delete(path);
-                                    textFile.CopyTo(path);
-                                }
+                                textFile = new FileInfo(BackupPath);
+                                File.Delete(path);
+                                textFile.CopyTo(path);
                             }
                         }
                     }
@@ -307,6 +339,7 @@
 
                 //Clears any white-space (/s) character AND non-white-space character (/S) ---  @"(<[\s\S]+?>)"
                 output = Regex.Replace(output, @"(&lt;[\s\S]+?&gt;)", string.Empty); //Remove Tags from the XML
+                output = Regex.Replace(output, @"\t|\n|\r", string.Empty); //Remove Tabs or White Space
 
                 if (!response.IsSuccessStatusCode)
                 {
@@ -341,23 +374,24 @@
         {
             Progress<ProgressReport> progress = new Progress<ProgressReport>();
             progress.ProgressChanged += ReportProgress;
+            labelReport.Content = "Saving Countries Information into Database.";
 
             await dataService.SaveDataCountry(ListOfCountries, progress);
-            labelReport.Content = "Saving Countries Data into Database.";
         }
 
         public async Task SaveCountryRates()
         {
             Progress<ProgressReport> progress = new Progress<ProgressReport>();
             progress.ProgressChanged += ReportProgress;
+            labelReport.Content = "Saving Rates Information into Database.";
 
             await dataService.SaveDataRates(ListOfApiRates, progress);
-            labelReport.Content = "Saving Rates Data into Database.";
 
         }
 
 
 
+        //Load Data locally
 
         /// <summary>
         /// Access DB in case there is no Internet Connection
@@ -366,13 +400,30 @@
         /// <returns></returns>
         private async Task LoadLocalDataCountries()
         {
-            Progress<ProgressReport> progress = new Progress<ProgressReport>();
-            progress.ProgressChanged += ReportProgress;
-
-            ListOfCountries = await dataService.GetLocalDataCountry(); //Returns a Local Repository containing The various API's Data
-            ListOfApiRates = await dataService.GetLocalDataRates();
+            await LoadLocalCountry();
+            await LoadLocalRates();
         }
 
+        private async Task LoadLocalCountry()
+        {
+            Progress<ProgressReport> progress = new Progress<ProgressReport>();
+            progress.ProgressChanged += ReportProgress;
+            labelReport.Content = "Loading Countries Data from Local Database";
+
+            ListOfCountries = await dataService.GetLocalDataCountry(); //Returns a Local Repository containing The various API's Data
+
+            List<Country> listBoxList = ListOfCountries;
+            listBoxCountries.ItemsSource = listBoxList;
+        }
+
+        private async Task LoadLocalRates()
+        {
+            Progress<ProgressReport> progress = new Progress<ProgressReport>();
+            progress.ProgressChanged += ReportProgress;
+            labelReport.Content = "Loading Rates Data from Local Database";
+
+            ListOfApiRates = await dataService.GetLocalDataRates();
+        }
 
 
 
@@ -417,56 +468,65 @@
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private async void listBoxCountries_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void listBoxCountries_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            ListBoxLanguages.ItemsSource = ListOfCountries;
             Country selectedCountry = (Country)listBoxCountries.SelectedItem;
 
             if (selectedCountry != null)
             {
+                string pathCountryWiki = Environment.CurrentDirectory + @"/CountriesTexts" + $@"/{selectedCountry.Alpha3Code}.txt";
+                string backupPathCountryWiki = Environment.CurrentDirectory + @"/BackupCountriesTexts" + $@"/{selectedCountry.Alpha3Code}.txt";
+                string pathCountryHoliday = Environment.CurrentDirectory + @"/HolidaysTexts" + $@"/{selectedCountry.Alpha3Code}.txt";
+                string backupPathCountryHoliday = Environment.CurrentDirectory + @"/BackupHolidaysTexts" + $@"/{selectedCountry.Alpha3Code}.txt";
+
                 try
                 {
-                    string Path = Environment.CurrentDirectory + "/CountriesTexts" + $"/{selectedCountry.Alpha2Code}.txt";
-                  
-                    var connection = networkService.CheckConnection();
-
                     if (selectedCountry != null)
                     {
                         List<Language> selectedCountryLanguage = (selectedCountry.Languages);
                         ListBoxLanguages.ItemsSource = selectedCountryLanguage;
                     }
 
-                    TxtDescription.Text = File.ReadAllText(Path);
+                    TxtBlockName.Text = selectedCountry.Name;
+                    TxtBlockNativeName.Text = selectedCountry.NativeName;
+                    TxtBlockCapital.Text = selectedCountry.Capital;
+                    TxtBlockRegion.Text = selectedCountry.Region;
+                    TxtBlockSubRegion.Text = selectedCountry.Subregion;
+                    TxtBlockArea.Text = selectedCountry.Area.GetValueOrDefault().ToString() + " Km2";
+                    TxtBlockGini.Text = selectedCountry.Gini.GetValueOrDefault().ToString();
+                    TxtBlockPopulation.Text = selectedCountry.Population/*.ToString("#,#", CultureInfo.InvariantCulture)*/ + " Inhabitants";
+                    LblDescription.Content = selectedCountry.Name + $"({selectedCountry.NativeName})";
+                    txtRegion.Text = selectedCountry.Region;
 
-                    this.TxtBlockName.Text = selectedCountry.Name;
-                    this.TxtBlockNativeName.Text = selectedCountry.NativeName;
-                    this.TxtBlockCapital.Text = selectedCountry.Capital;
-                    this.TxtBlockRegion.Text = selectedCountry.Region;
-                    this.TxtBlockSubRegion.Text = selectedCountry.Subregion;
-                    this.TxtBlockArea.Text = selectedCountry.Area.GetValueOrDefault().ToString() + " Km2";
-                    this.TxtBlockGini.Text = selectedCountry.Gini.GetValueOrDefault().ToString();
-                    this.TxtBlockPopulation.Text = selectedCountry.Population/*.ToString("#,#", CultureInfo.InvariantCulture)*/ + " Inhabitants";
-                    this.LblDescription.Content = selectedCountry.Name + $"({selectedCountry.NativeName})";
-                    this.txtRegion.Text = selectedCountry.Region;
+                    //CheckData(selectedCountry);
 
-                    CheckData(selectedCountry);
-
-                    if (connection.IsSucess)
+                    if (!File.Exists(pathCountryWiki))
                     {
-                        await LoadApiHoliday(selectedCountry.Alpha2Code);
+                        TxtDescription.Text = File.ReadAllText(backupPathCountryWiki);
                     }
                     else
                     {
-                        countHolidays.Content = $"In order to list this country holidays, please check your Internet Connection.";
+                        TxtDescription.Text = File.ReadAllText(pathCountryWiki);
                     }
+
+                    if (!File.Exists(pathCountryHoliday))
+                    {
+                        txtCountriesHolidays.Text = File.ReadAllText(backupPathCountryHoliday);
+                        countHolidays.Content = $"{File.ReadAllLines(backupPathCountryHoliday).Count()} Holidays:";
+                    }
+                    else
+                    {
+                        txtCountriesHolidays.Text = File.ReadAllText(pathCountryHoliday);
+                        countHolidays.Content = $"{File.ReadAllLines(pathCountryHoliday).Count()} Holidays:";
+                    }
+
 
                     listBoxCountries.ItemsSource = ListOfCountries;
 
                 }
-                catch
+                catch                                                                                                                                                                         
                 {
-                    MessageBox.Show("Error");
-                    ListBoxLanguages.ItemsSource = ListOfCountries;
+                    MessageBox.Show("Error presenting this Country Wiki Text");
                 }
 
                 try //FlagImage
@@ -475,15 +535,15 @@
                     BitmapImage img = new BitmapImage();
                     img.BeginInit();
 
-                    if (File.Exists(Environment.CurrentDirectory + "/ImagesPNG" + $"/{selectedCountry.Name}.png"))
+                    if (File.Exists(Environment.CurrentDirectory + "/FlagsPNG" + $"/{selectedCountry.Name}.png"))
                     {
-                        img.UriSource = new Uri(Environment.CurrentDirectory + "/ImagesPNG" + $"/{selectedCountry.Name}.png");
+                        img.UriSource = new Uri(Environment.CurrentDirectory + "/FlagsPNG" + $"/{selectedCountry.Name}.png");
                     }
-                    else if (!File.Exists(Environment.CurrentDirectory + "/ImagesPNG" + $"/{selectedCountry.Name}.png"))
+                    else if (!File.Exists(Environment.CurrentDirectory + "/FlagsPNG" + $"/{selectedCountry.Name}.png")) //If the image doesn't exist in the folder of flags
                     {
-                        ////img.UriSource = new Uri(Environment.CurrentDirectory + "/Resources/NoImageAvailable.png");
-                        //FlagImage.Stretch = Stretch.fill;
+                        img.UriSource = new Uri(Environment.CurrentDirectory + "/BackupFlagsPNG" + $"/{selectedCountry.Name}.png");
                     }
+                    
 
                     img.EndInit();
 
@@ -497,14 +557,11 @@
                 }
                 catch
                 {
-                    BitmapImage imgregion = new BitmapImage();
-                    imgregion.BeginInit();
-                    if (selectedCountry.Region == null)
-                    {
-                        //    imgregion.UriSource = new Uri(Environment.CurrentDirectory + "/Resources/NoImageAvailable.png");
-                    }
-
-                    MessageBox.Show("Failed When Presenting Selected Country Flag Image");
+                    BitmapImage img = new BitmapImage();
+                    img.BeginInit();
+                    img.UriSource = new Uri(Environment.CurrentDirectory + "/NoImageAvailable.png");
+                    FlagImage.Source = img;
+                    img.EndInit();
                 }
 
                 try // Region Image 
@@ -516,41 +573,45 @@
                     if (selectedCountry.Region == "Europe")
                     {
                         imgregion.UriSource = new Uri(Environment.CurrentDirectory + "/Regions" + "/europe.png");
+                        RegionImage.Source = imgregion;
                     }
                     if (selectedCountry.Region == "Americas")
                     {
                         imgregion.UriSource = new Uri(Environment.CurrentDirectory + "/Regions" + "/americas.png");
+                        RegionImage.Source = imgregion;
                     }
                     if (selectedCountry.Region == "Oceania")
                     {
                         imgregion.UriSource = new Uri(Environment.CurrentDirectory + "/Regions" + "/oceania.png");
+                        RegionImage.Source = imgregion;
                     }
                     if (selectedCountry.Region == "Africa")
                     {
                         imgregion.UriSource = new Uri(Environment.CurrentDirectory + "/Regions" + "/africa.png");
+                        RegionImage.Source = imgregion;
                     }
                     if (selectedCountry.Region == "Polar")
                     {
                         imgregion.UriSource = new Uri(Environment.CurrentDirectory + "/Regions" + "/antarctida.png");
+                        RegionImage.Source = imgregion;
                     }
                     if (selectedCountry.Region == "Asia")
                     {
                         imgregion.UriSource = new Uri(Environment.CurrentDirectory + "/Regions" + "/asia.png");
+                        RegionImage.Source = imgregion;
                     }
+                    
 
                     imgregion.EndInit();
-                    RegionImage.Source = imgregion;
                 }
                 catch
                 {
                     BitmapImage imgregion = new BitmapImage();
                     imgregion.BeginInit();
-                    if (selectedCountry.Region == null)
-                    {
-                        //imgregion.UriSource = new Uri(Environment.CurrentDirectory + "/Resources/NoImageAvailable.png");
-                    }
+                    imgregion.UriSource = new Uri(Environment.CurrentDirectory + "/NoImageAvailable.png");
+                    RegionImage.Source = imgregion;
+                    imgregion.EndInit();
 
-                    MessageBox.Show("Error while presenting Selected Country Regional Bloc Image");
                 }
 
                 try //Rates 
@@ -562,7 +623,7 @@
                     ListBoxCountryCurrency.ItemsSource = selectedCountryCurrency;
 
                     if (ListOfApiRates.Count > 0)
-                        foreach (Rates r in ListOfApiRates)  // meter try
+                        foreach (Rates r in ListOfApiRates)
                         {
                             foreach (Currency c in selectedCountryCurrency)
                             {
@@ -570,24 +631,20 @@
                                 {
                                     listauxrate.Add(r);
                                 }
-                                //else if (c.CurrencyName.ToLower() == r.Name.ToLower())
-                                //{
-                                //    listauxrate.Add(r);
-                                //}
+                            }
+
+                            OriginValue.ItemsSource = listauxrate;
+                            DestinationValue.ItemsSource = ListOfApiRates;
+
+                            if (selectedCountryCurrency.Count == 1)
+                            {
+                                txtCountryCurrency.Text = $"{selectedCountry.Name} has {selectedCountryCurrency.Count} Currency";
+                            }
+                            if (selectedCountryCurrency.Count > 1)
+                            {
+                                txtCountryCurrency.Text = $"{selectedCountry.Name} has {selectedCountryCurrency.Count} Currencies";
                             }
                         }
-
-                    OriginValue.ItemsSource = listauxrate;
-                    DestinationValue.ItemsSource = ListOfApiRates;
-
-                    if (selectedCountryCurrency.Count == 1)
-                    {
-                        txtCountryCurrency.Text = $"{selectedCountry.Name} has {selectedCountryCurrency.Count} Currency";
-                    }
-                    if (selectedCountryCurrency.Count > 1)
-                    {
-                        txtCountryCurrency.Text = $"{selectedCountry.Name} has {selectedCountryCurrency.Count} Currencies";
-                    }
                 }
                 catch
                 {
@@ -655,7 +712,40 @@
         /// <param name="e"></param>
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            Environment.Exit(0);
+            if (((string) labelReport.Content == "Loading Countries Data from Local Database") || ((string)labelReport.Content == "Loading Rates Data from Local Database") || ((string)labelReport.Content == "Downloading Countries Texts Information.") || ((string)labelReport.Content == "Updating Holidays Information."))     
+            {
+                
+                MessageBoxResult result = MessageBox.Show("Your Program is still downloading Information. Are you sure you want to exit?",
+                        "Warning", MessageBoxButton.YesNo);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    Environment.Exit(0);
+                }
+                
+            }
+
+            else if (((string)labelReport.Content == "Saving Countries Information into Database.") || ((string)labelReport.Content == "Saving Rates Information into Database."))
+            {
+                MessageBoxResult result = MessageBox.Show("Your Program is still saving Information. Are you sure you want to exit?",
+                        "Warning", MessageBoxButton.YesNo);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    Environment.Exit(0);
+                }
+            }
+
+            else
+            {
+                Environment.Exit(0);
+            }
+            
+            
+
+            
+
+
         }
 
         /// <summary>

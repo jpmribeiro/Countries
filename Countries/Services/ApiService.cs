@@ -180,7 +180,7 @@ namespace Countries.Services
                 var rates = JsonConvert.DeserializeObject<List<Rates>>(result);
 
                 report3.SaveRates = rates;
-                report3.Percentagem = (report3.SaveCountries.Count * 100) / rates.Count;
+                report3.Percentagem = (report3.SaveRates.Count * 100) / rates.Count;
                 progress.Report(report3);
 
                 return new Response

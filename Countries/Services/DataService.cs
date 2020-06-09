@@ -7,11 +7,9 @@
     using System.Data.SQLite;
     using System.Globalization;
     using System.IO;
-    using System.Linq;
     using System.Net;
     using System.Threading;
     using System.Threading.Tasks;
-    using System.Windows;
 
     public class DataService
     {
@@ -203,6 +201,8 @@
 
                 }
 
+                connection.Close();
+
             }
             catch (Exception e)
             {
@@ -227,12 +227,12 @@
                     string sql = string.Format("insert into Rates (RateId,Code,TaxRate,Name) values('{0}', '{1}', '{2}', '{3}')", rate.RateId, rate.Code, rate.TaxRate, rate.Name);
                     commandCountry = new SQLiteCommand(sql, connection);
                     await Task.Run(() => commandCountry.ExecuteNonQuery());
+
                     report3.SaveRates.Add(rate);
-                    report3.Percentagem = (report3.SaveCountries.Count * 100) / Rates.Count;
+                    report3.Percentagem = (report3.SaveRates.Count * 100) / Rates.Count;
                     progress.Report(report3);
                 }
 
-                connection.Close();
             }
             catch (Exception e)
             {
@@ -333,14 +333,11 @@
 
                 foreach(Country c in Countries)
                 {
-                    //string sqlLanguages = $"SELECT Iso639_1,Iso639_2,Name,NativeName FROM Languages INNER JOIN CountryLanguage ON Languages.Iso639_2=CountryLanguage.CodLanguage WHERE Alpha3Code='AFG'"; //{c.Alpha3Code}
-
                     commandCountry.Parameters.AddWithValue("@alpha3Code", c.Alpha3Code);
                     commandCountry.CommandText = "SELECT Iso639_1, Iso639_2, Name, NativeName FROM Languages INNER JOIN CountryLanguage ON Languages.Iso639_2 = CountryLanguage.CodLanguage WHERE Alpha3Code =@alpha3Code";
                     commandCountry.Connection = connection;
 
                     SQLiteDataReader readerLanguages = commandCountry.ExecuteReader();
-                    //MessageBox.Show(readerLanguages.FieldCount.ToString());
 
                     await Task.Run(() =>
                     {
@@ -358,31 +355,11 @@
 
                     readerLanguages.Close();
                     
-
-                    //while (readerLanguages.Read())
-                    //{
-                    //    int aux = 0;
-
-                    //    c.Languages.Add(new Language
-                    //    {
-                    //        Iso639_1 = (string)readerLanguages["Iso639_1"],
-                    //        Iso639_2 = (string)readerLanguages["Iso639_2"],
-                    //        Name = (string)readerLanguages["Name"],
-                    //        NativeName = (string)readerLanguages["NativeName"]
-                    //    });
-
-                    //    aux++;
-                    //    MessageBox.Show($"{aux}");
-                    //}
-
-                    //readerLanguages.Close();
-
                     commandCountry.Parameters.AddWithValue("@alpha3Code", c.Alpha3Code);
                     commandCountry.CommandText = "SELECT Code,CurrencyName,Symbol FROM Currency INNER JOIN CountryCurrency ON Currency.Code=CountryCurrency.CurrencyCode WHERE Alpha3Code=@alpha3code";
                     commandCountry.Connection = connection;
 
                     SQLiteDataReader readerCurrencies= commandCountry.ExecuteReader();
-                    //MessageBox.Show(readerCurrencies.FieldCount.ToString());
 
                     await Task.Run(() =>
                     {
@@ -399,20 +376,6 @@
 
                     readerCurrencies.Close();
 
-                    //string sqlCurrencies = $"SELECT Code,CurrencyName,Symbol FROM Currency INNER JOIN CountryCurrency ON Currency.Code=CountryCurrency.CurrencyCode WHERE Alpha3Code='{c.Alpha3Code}'";
-                    //SQLiteDataReader readerCurrencies = commandCountry.ExecuteReader();
-
-                    //while (readerCurrencies.Read())
-                    //{
-                    //    c.Currencies.Add(new Currency
-                    //    {
-                    //        Code = (string)readerCurrencies["Code"],
-                    //        CurrencyName = (string)readerCurrencies["CurrencyName"],
-                    //        Symbol = (string)readerCurrencies["Symbol"]
-                    //    });
-                    //}
-
-                    //readerCurrencies.Close();
                 }
 
                 return Countries;
@@ -460,8 +423,6 @@
                 dialogService.ShowMessage("Erro", e.Message);
                 return null;
             }
-
-
 
         }
 
@@ -522,51 +483,59 @@
         /// </summary>
         /// <param name="url"></param>
         /// <param name="filename"></param>
-        public async Task SaveFlag(string url, string filename)
+        public async Task SaveFlag(List<Country> ListCountry, IProgress<ProgressReport> progress)
         {
-            await Task.Run(() =>
+            ProgressReport report = new ProgressReport();
+
+            foreach (var item in ListCountry)
             {
-                if (!Directory.Exists("Images"))
+                if (!File.Exists(Environment.CurrentDirectory + "/FlagsPNG" + $"/{item.Name}.png"))
                 {
-                    Directory.CreateDirectory("Images");
-                }
-
-                try
-                {
-                    using (WebClient webClient = new WebClient())
+                    await Task.Run(() =>
                     {
-                        webClient.DownloadFile(url, @"Images\" + filename + ".svg");
-                    }
-                }
-                catch (Exception e)
-                {
-                    dialogService.ShowMessage("Error While Creating SVG Images Folder", e.Message);
-                }
+                        if (!Directory.Exists("Images"))
+                        {
+                            Directory.CreateDirectory("Images");
+                        }
 
-                if (!Directory.Exists("ImagesPNG"))
-                {
-                    Directory.CreateDirectory("ImagesPNG");
-                }
+                        try
+                        {
+                            using (WebClient webClient = new WebClient())
+                            {
+                                webClient.DownloadFile(item.Flag, @"Images\" + item.Name + ".svg");
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            dialogService.ShowMessage("Error While Creating SVG Images Folder", e.Message);
+                        }
 
-                try
-                {
-                    using (MagickImage image = new MagickImage(@"Images\" + filename + ".svg"))
-                    {
-                        image.Write(@"ImagesPNG\" + filename + ".png");
-                    }
+                        if (!Directory.Exists("FlagsPNG"))
+                        {
+                            Directory.CreateDirectory("FlagsPNG");
+                        }
+
+                        try
+                        {
+                            using (MagickImage image = new MagickImage(@"Images\" + item.Name + ".svg"))
+                            {
+                                image.Write(@"FlagsPNG\" + item.Name + ".png");
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            dialogService.ShowMessage("Error While Creating PNG Images Folder", e.Message);
+                        }
+
+                        report.SaveCountries.Add(item);
+                        report.Percentagem = (report.SaveCountries.Count * 100) / ListCountry.Count;
+                        progress.Report(report);
+
+                    });
                 }
-                catch (Exception e)
-                {
-                    dialogService.ShowMessage("Error While Creating PNG Images Folder", e.Message);
-                }
-            });
+            }
+
         }
-
-        //public async Task SaveCountryText()
-        //{
-
-        //}
-
 
     }
 }
